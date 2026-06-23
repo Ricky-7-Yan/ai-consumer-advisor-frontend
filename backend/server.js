@@ -3616,12 +3616,16 @@ function analyzeDecisionQuality(userRecords) {
   };
 }
 
-const server = app.listen(PORT, () => {
-  console.log(`AI消费防冲动理性参谋后端服务运行在 http://localhost:${PORT}`);
-  console.log(`API健康检查: http://localhost:${PORT}/api/health`);
-  console.log(`Loaded impulseIndicators count: ${impulseIndicators ? impulseIndicators.length : 'undefined'}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  const server = app.listen(PORT, () => {
+    console.log(`AI消费防冲动理性参谋后端服务运行在 http://localhost:${PORT}`);
+    console.log(`API健康检查: http://localhost:${PORT}/api/health`);
+    console.log(`Loaded impulseIndicators count: ${impulseIndicators ? impulseIndicators.length : 'undefined'}`);
+  });
+  
+  server.on('error', (err) => {
+    console.error('Server error:', err);
+  });
+}
 
-server.on('error', (err) => {
-  console.error('Server error:', err);
-});
+module.exports = app;
