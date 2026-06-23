@@ -347,6 +347,78 @@ const MockAPI = {
       detectedTraps: tactics.slice(0, 3).map(t => ({ name: t })),
       summary: tactics.length > 0 ? `检测到${tactics.length}种营销套路，建议谨慎购买` : '未检测到明显消费陷阱'
     };
+
+    const regretScore = Math.min(Math.round((tactics.length * 1.5 + impulse.length * 1 + (100 - necessity.score) * 0.05)), 5);
+    const regretAnalysis = {
+      regretScore: regretScore,
+      description: regretScore >= 4 ? '您很可能会后悔这次购买，建议谨慎决策' : 
+                   regretScore >= 3 ? '存在一定后悔风险，建议再考虑一下' : 
+                   regretScore >= 2 ? '略有风险，但可以接受' : '风险较低，不太可能后悔',
+      contributingFactors: impulse.slice(0, 3).map(k => ({ keyword: k }))
+    };
+
+    const pricePrediction = this.generatePricePrediction(price, category);
+
+    const priceIndicatorAnalysis = {
+      hasData: true,
+      priceTier: priceIndicator.priceTier,
+      priceDeviation: Math.round(priceIndicator.priceDeviation * 100),
+      deviationLevel: Math.abs(priceIndicator.priceDeviation) > 0.3 ? 'very_high' : 
+                      Math.abs(priceIndicator.priceDeviation) > 0.15 ? 'high' : 'normal',
+      sensitivity: priceIndicator.sensitivityLevel,
+      volatility: priceIndicator.priceChangeRate > 0.1 ? '高' : 
+                  priceIndicator.priceChangeRate > 0.05 ? '中' : '低',
+      deviationDescription: priceIndicator.priceDeviation > 0 ? `价格高于市场平均${Math.round(priceIndicator.priceDeviation * 100)}%` : 
+                            priceIndicator.priceDeviation < -0.15 ? `价格低于市场平均${Math.round(Math.abs(priceIndicator.priceDeviation) * 100)}%` : '价格在正常范围内'
+    };
+
+    const industryAnalysis = {
+      hasData: true,
+      seasonStatus: industry.seasonality === '强' ? 'peak' : 'off-peak',
+      marketSize: industry.marketSize,
+      growthRate: industry.growthRate === '高' ? '20-30%' : industry.growthRate === '中' ? '10-20%' : '0-10%',
+      competitiveIntensity: industry.competition,
+      seasonDescription: industry.seasonality === '强' ? '当前处于销售旺季' : '当前处于销售淡季',
+      upcomingPromotions: [{ name: '618大促' }, { name: '双11' }, { name: '年终特惠' }]
+    };
+
+    const competitorAnalysis = {
+      hasData: true,
+      comparisonResult: competitors.priceComparison === '高于平均' ? 'overpriced' : 
+                        competitors.priceComparison === '低于平均' ? 'reasonable' : 'reasonable',
+      comparisonDescription: competitors.priceComparison === '高于平均' ? '该产品价格高于市场平均水平，建议货比三家' : 
+                             '该产品价格处于合理范围内',
+      priceToMidRangeRatio: price / (competitors.avgMarketPrice || 500),
+      matchedCompetitors: competitors.alternatives.map(b => ({
+        brand: b,
+        avgPrice: { midRange: Math.round(competitors.avgMarketPrice * (0.9 + Math.random() * 0.2)) },
+        priceDiff: Math.round(((price - competitors.avgMarketPrice) / competitors.avgMarketPrice) * 100)
+      })),
+      alternativeOptions: competitors.alternatives.slice(0, 2).map(b => ({
+        brand: b,
+        expectedPrice: Math.round(competitors.avgMarketPrice * 0.85),
+        savings: Math.round(price - competitors.avgMarketPrice * 0.85)
+      }))
+    };
+
+    const insights = [];
+    if (tactics.length > 0) {
+      insights.push({ type: 'warning', title: '检测到营销套路', content: `识别到${tactics.length}种常见营销手段，建议保持理性` });
+    }
+    if (priceIndicator.isHighPrice) {
+      insights.push({ type: 'info', title: '价格偏高', content: '该商品价格高于同类产品平均水平，建议对比后再决定' });
+    }
+    if (necessity.level === '低') {
+      insights.push({ type: 'warning', title: '非必需品', content: '这是一个非必需购买项，建议延迟24小时再做决定' });
+    }
+    if (riskLevel === 'low') {
+      insights.push({ type: 'success', title: '风险较低', content: '该购买决策风险较低，可以放心购买' });
+    }
+
+    const priceAnalysis = {
+      threshold: priceIndicator.threshold,
+      exceedsThreshold: price > priceIndicator.threshold
+    };
     
     return {
       success: true,
@@ -366,13 +438,30 @@ const MockAPI = {
         necessityLevel: necessity.level,
         necessityScore: necessity.score,
         priceIndicator: priceIndicator,
-        industryAnalysis: industry,
-        competitorAnalysis: competitors,
+        industryAnalysis: industryAnalysis,
+        competitorAnalysis: competitorAnalysis,
         timestamp: new Date().toISOString(),
         dimensionAnalysis: dimensionAnalysis,
         trapAnalysis: trapAnalysis,
+        regretAnalysis: regretAnalysis,
+        pricePrediction: pricePrediction,
+        priceIndicatorAnalysis: priceIndicatorAnalysis,
+        insights: insights,
+        priceAnalysis: priceAnalysis,
         suggestions: this.generateRecommendation(riskLevel, tactics, priceIndicator, necessity)
       }
+    };
+  },
+
+  generatePricePrediction(price, category) {
+    const indicator = this.priceIndicatorData[category] || this.priceIndicatorData['default'];
+    const dropProbability = indicator.priceElasticity > 1 ? 45 : 25;
+    
+    return {
+      dropProbability: dropProbability,
+      description: dropProbability > 40 ? '近期价格下降概率较高，建议观望' : '价格相对稳定',
+      expectedDropAmount: dropProbability > 40 ? Math.round(price * 0.15) : 0,
+      bestTimeToBuy: this.determineBestBuyWindow(category)
     };
   },
 
