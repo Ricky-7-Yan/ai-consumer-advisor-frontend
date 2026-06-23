@@ -327,6 +327,26 @@ const MockAPI = {
       decision = 'reject';
       savedAmount = price;
     }
+
+    const tacticDetails = tactics.map(tactic => ({
+      name: tactic,
+      description: this.getTacticDescription(tactic)
+    }));
+
+    const recommendationText = decision === 'reject' ? '建议拒绝' : '可以购买';
+
+    const dimensionAnalysis = [
+      { name: '营销套路', score: Math.min(tactics.length * 0.25, 1) },
+      { name: '冲动指标', score: Math.min(impulse.length * 0.2, 1) },
+      { name: '心理因素', score: Math.min(psychology.length * 0.2, 1) },
+      { name: '价格风险', score: Math.min(priceIndicator.priceChangeRisk / 30, 1) },
+      { name: '必要性', score: 1 - (necessity.score / 100) }
+    ];
+
+    const trapAnalysis = {
+      detectedTraps: tactics.slice(0, 3).map(t => ({ name: t })),
+      summary: tactics.length > 0 ? `检测到${tactics.length}种营销套路，建议谨慎购买` : '未检测到明显消费陷阱'
+    };
     
     return {
       success: true,
@@ -334,11 +354,13 @@ const MockAPI = {
         productName: productName,
         price: price,
         category: category,
-        riskScore: riskScore,
+        riskScore: Math.round(riskScore / 10),
         riskLevel: riskLevel,
         decision: decision,
+        recommendation: decision,
+        recommendationText: recommendationText,
         savedAmount: savedAmount,
-        detectedTactics: tactics,
+        detectedTactics: tacticDetails,
         impulseIndicators: impulse,
         psychologyFactors: psychology,
         necessityLevel: necessity.level,
@@ -347,9 +369,32 @@ const MockAPI = {
         industryAnalysis: industry,
         competitorAnalysis: competitors,
         timestamp: new Date().toISOString(),
-        recommendation: this.generateRecommendation(riskLevel, tactics, priceIndicator, necessity)
+        dimensionAnalysis: dimensionAnalysis,
+        trapAnalysis: trapAnalysis,
+        suggestions: this.generateRecommendation(riskLevel, tactics, priceIndicator, necessity)
       }
     };
+  },
+
+  getTacticDescription(tactic) {
+    const descriptions = {
+      '限时抢购': '通过时间限制制造紧迫感，促使消费者快速决策',
+      '限量发售': '通过数量限制制造稀缺感，激发占有欲',
+      '饥饿营销': '刻意营造供不应求的假象',
+      '满减陷阱': '通过满减优惠诱导消费者购买非必需商品',
+      '捆绑套餐': '将高利润商品与低利润商品捆绑销售',
+      '直播带货': '通过直播形式进行实时推销',
+      '低价诱饵': '用低价商品吸引流量，实际销售高价商品',
+      '免费试用': '通过免费试用降低购买门槛',
+      '会员专属': '营造专属感，促使消费者付费成为会员',
+      '新品首发': '利用消费者对新品的好奇心理',
+      '社交证明': '展示他人购买记录或评价',
+      '稀缺性营销': '强调商品的独特性和不可替代性',
+      '权威背书': '引用专家或权威机构的推荐',
+      '情感营销': '通过情感共鸣促使购买',
+      '紧迫感营造': '通过倒计时等方式制造购买压力'
+    };
+    return descriptions[tactic] || '一种常见的营销手段';
   },
 
   generateRecommendation(riskLevel, tactics, priceIndicator, necessity) {
