@@ -9,7 +9,11 @@ class ConsumerAdvisorAPI {
       if (result.success) {
         window.MockAPI.saveAnalysis(result.data);
       }
-      return result;
+      return {
+        success: result.success,
+        recordId: Date.now(),
+        analysis: result.data
+      };
     } catch (error) {
       console.error('分析失败:', error);
       return { success: false, error: error.message };
@@ -28,10 +32,15 @@ class ConsumerAdvisorAPI {
   async getStats() {
     try {
       const stats = window.MockAPI.getStats(this.userId);
+      const recentRecords = window.MockAPI.getHistory(this.userId, 30);
+      const totalSaved = recentRecords.reduce((sum, r) => sum + r.saved_amount, 0);
+      const rejectCount = recentRecords.filter(r => r.decision === 'reject').length;
+      const acceptCount = recentRecords.filter(r => r.decision === 'accept').length;
+      
       return {
-        totalSaved: stats.totalSaved,
-        rejectCount: stats.totalRejected,
-        acceptCount: stats.totalAccepted,
+        totalSaved: totalSaved,
+        rejectCount: rejectCount,
+        acceptCount: acceptCount,
         totalAnalyzed: stats.totalAnalyzed,
         streak: stats.streakDays,
         badges: stats.badges,

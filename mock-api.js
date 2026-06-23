@@ -440,10 +440,10 @@ const MockAPI = {
     return newRecord;
   },
 
-  getHistory(userId = 1, limit = 10) {
+  getHistory(userId = 1, days = 30) {
+    const cutoffDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     return this.database.analysis_records
-      .filter(r => r.user_id === userId)
-      .slice(0, limit);
+      .filter(r => r.user_id === userId && new Date(r.created_at) >= cutoffDate);
   },
 
   getStats(userId = 1) {
