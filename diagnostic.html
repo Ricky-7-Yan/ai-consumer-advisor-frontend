@@ -505,25 +505,37 @@
             `;
 
             try {
-                const response = await fetch('/api/diagnostic/1');
-                const report = await response.json();
+                const result = await consumerAdvisorAPI.getDiagnostic();
 
-                if (!report.hasData) {
+                if (!result.hasData) {
                     container.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-icon">📊</div>
                             <div class="empty-title">暂无足够数据</div>
-                            <div class="empty-desc">${report.message || '请先进行几次消费分析后再查看诊断报告'}</div>
+                            <div class="empty-desc">${result.message || '请先进行几次消费分析后再查看诊断报告'}</div>
                         </div>
                     `;
                     return;
                 }
 
+                const report = result.data;
+
                 timeElement.textContent = new Date(report.generatedAt).toLocaleString('zh-CN');
 
-                const scoreColor = report.overview.rationalityScore >= 80 ? '#10b981' : 
-                                   report.overview.rationalityScore >= 60 ? '#3b82f6' :
-                                   report.overview.rationalityScore >= 40 ? '#f59e0b' : '#ef4444';
+                const scoreColor = report.rationalityScore >= 80 ? '#10b981' : 
+                                   report.rationalityScore >= 60 ? '#3b82f6' :
+                                   report.rationalityScore >= 40 ? '#f59e0b' : '#ef4444';
+
+                const rejectRate = report.stats.totalAnalyzed > 0 ? 
+                    Math.round((report.stats.totalRejected / report.stats.totalAnalyzed) * 100) : 0;
+
+                const conclusions = report.rationalityScore >= 80 ? 
+                    [{ title: '消费大师', content: '您的消费决策非常理性，善于识别营销套路，继续保持！' }] :
+                    report.rationalityScore >= 60 ? 
+                    [{ title: '理性消费者', content: '您的消费习惯良好，具备一定的风险识别能力。' }] :
+                    report.rationalityScore >= 40 ? 
+                    [{ title: '需要改进', content: '您存在一定的冲动消费倾向，建议加强自我约束。' }] :
+                    [{ title: '风险较高', content: '您的消费决策风险较高，建议设置冷静期和预算控制。' }];
 
                 const renderCommonTactics = () => {
                     if (!report.commonTactics || report.commonTactics.length === 0) return '';
@@ -550,8 +562,8 @@
                             <div class="section-title">⚠️ 问题诊断</div>
                             ${report.issues.map(issue => `
                                 <div class="issue-item">
-                                    <div class="issue-title">${issue.title}</div>
-                                    <div class="issue-desc">${issue.content}</div>
+                                    <div class="issue-title">${issue}</div>
+                                    <div class="issue-desc">需要关注此问题，避免影响消费决策</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -559,14 +571,14 @@
                 };
 
                 const renderRecommendations = () => {
-                    if (!report.recommendations || report.recommendations.length === 0) return '';
+                    if (!report.suggestions || report.suggestions.length === 0) return '';
                     return `
                         <div class="glass-card" style="margin-bottom: 24px;">
                             <div class="section-title">💡 改进建议</div>
-                            ${report.recommendations.map((rec, idx) => `
+                            ${report.suggestions.map((rec, idx) => `
                                 <div class="recommendation-item">
                                     <div class="recommendation-number">${idx + 1}.</div>
-                                    <div class="recommendation-text">${rec.content}</div>
+                                    <div class="recommendation-text">${rec}</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -584,34 +596,34 @@
                             <svg viewBox="0 0 150 150">
                                 <circle cx="75" cy="75" r="65" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
                                 <circle cx="75" cy="75" r="65" fill="none" stroke="${scoreColor}" stroke-width="12"
-                                    stroke-dasharray="${report.overview.rationalityScore * 4.08} 408" stroke-linecap="round"/>
+                                    stroke-dasharray="${report.rationalityScore * 4.08} 408" stroke-linecap="round"/>
                             </svg>
                             <div class="score-inner">
-                                <div class="score-number" style="color: ${scoreColor};">${report.overview.rationalityScore}</div>
+                                <div class="score-number" style="color: ${scoreColor};">${report.rationalityScore}</div>
                                 <div class="score-label">理性指数</div>
                             </div>
                         </div>
                         <div class="rationality-content">
-                            <div class="rationality-title">${report.conclusions[0]?.title || '诊断中...'}</div>
-                            <div class="rationality-desc">${report.conclusions[0]?.content || ''}</div>
+                            <div class="rationality-title">${conclusions[0]?.title || '诊断中...'}</div>
+                            <div class="rationality-desc">${conclusions[0]?.content || ''}</div>
                         </div>
                     </div>
 
                     <div class="stats-grid">
                         <div class="glass-card stat-card">
-                            <div class="stat-value" style="color: var(--accent);">${report.overview.totalAnalyzed}</div>
+                            <div class="stat-value" style="color: var(--accent);">${report.stats.totalAnalyzed}</div>
                             <div class="stat-label">累计分析</div>
                         </div>
                         <div class="glass-card stat-card">
-                            <div class="stat-value" style="color: var(--success);">¥${report.overview.totalSaved.toLocaleString()}</div>
+                            <div class="stat-value" style="color: var(--success);">¥${report.stats.totalSaved.toLocaleString()}</div>
                             <div class="stat-label">累计节省</div>
                         </div>
                         <div class="glass-card stat-card">
-                            <div class="stat-value" style="color: var(--danger);">${report.overview.rejectRate}%</div>
+                            <div class="stat-value" style="color: var(--danger);">${rejectRate}%</div>
                             <div class="stat-label">拒绝率</div>
                         </div>
                         <div class="glass-card stat-card">
-                            <div class="stat-value" style="color: var(--warning);">¥${report.overview.monthlySaved.toLocaleString()}</div>
+                            <div class="stat-value" style="color: var(--warning);">¥${report.stats.totalSaved.toLocaleString()}</div>
                             <div class="stat-label">本月节省</div>
                         </div>
                     </div>
