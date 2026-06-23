@@ -36,6 +36,40 @@ class ConsumerAdvisorAPI {
       const totalSaved = recentRecords.reduce((sum, r) => sum + r.saved_amount, 0);
       const rejectCount = recentRecords.filter(r => r.decision === 'reject').length;
       const acceptCount = recentRecords.filter(r => r.decision === 'accept').length;
+
+      const riskDistribution = {
+        high: recentRecords.filter(r => r.risk_level === 'high').length,
+        medium: recentRecords.filter(r => r.risk_level === 'medium').length,
+        low: recentRecords.filter(r => r.risk_level === 'low').length
+      };
+
+      const categoryStats = {};
+      recentRecords.forEach(r => {
+        if (!categoryStats[r.category]) {
+          categoryStats[r.category] = { saved: 0, total: 0, accepted: 0, rejected: 0 };
+        }
+        categoryStats[r.category].saved += r.saved_amount;
+        categoryStats[r.category].total += 1;
+        if (r.decision === 'accept') {
+          categoryStats[r.category].accepted += 1;
+        } else {
+          categoryStats[r.category].rejected += 1;
+        }
+      });
+
+      const days = ['日', '一', '二', '三', '四', '五', '六'];
+      const weeklyTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dayStr = days[d.getDay()];
+        const count = recentRecords.filter(r => {
+          const recordDate = new Date(r.created_at);
+          return recordDate.getDate() === d.getDate() && 
+                 recordDate.getMonth() === d.getMonth();
+        }).length;
+        weeklyTrend.push({ day: dayStr, analyzed: count });
+      }
       
       return {
         totalSaved: totalSaved,
@@ -44,10 +78,20 @@ class ConsumerAdvisorAPI {
         totalAnalyzed: stats.totalAnalyzed,
         streak: stats.streakDays,
         badges: stats.badges,
-        averageRiskScore: stats.averageRiskScore
+        averageRiskScore: stats.averageRiskScore,
+        weeklyTrend: weeklyTrend,
+        riskDistribution: riskDistribution,
+        categoryStats: categoryStats
       };
     } catch (error) {
       console.error('获取统计数据失败:', error);
+      const days = ['日', '一', '二', '三', '四', '五', '六'];
+      const weeklyTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        weeklyTrend.push({ day: days[d.getDay()], analyzed: 0 });
+      }
       return {
         totalSaved: 0,
         rejectCount: 0,
@@ -55,7 +99,10 @@ class ConsumerAdvisorAPI {
         totalAnalyzed: 0,
         streak: 0,
         badges: [],
-        averageRiskScore: 0
+        averageRiskScore: 0,
+        weeklyTrend: weeklyTrend,
+        riskDistribution: { high: 0, medium: 0, low: 0 },
+        categoryStats: {}
       };
     }
   }
