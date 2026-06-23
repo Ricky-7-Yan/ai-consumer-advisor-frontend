@@ -61,7 +61,8 @@ class ConsumerAdvisorAPI {
       recentRecords.forEach(r => {
         if (r.detected_tactics) {
           r.detected_tactics.forEach(tactic => {
-            tacticStats[tactic] = (tacticStats[tactic] || 0) + 1;
+            const tacticName = typeof tactic === 'object' && tactic.name ? tactic.name : tactic;
+            tacticStats[tacticName] = (tacticStats[tacticName] || 0) + 1;
           });
         }
       });
