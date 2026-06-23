@@ -566,7 +566,7 @@ const MockAPI = {
       category: record.category,
       decision: record.decision,
       risk_level: record.riskLevel,
-      detected_tactics: record.detectedTactics,
+      detected_tactics: record.detectedTactics ? record.detectedTactics.map(t => t.name) : [],
       saved_amount: record.savedAmount,
       created_at: new Date().toISOString()
     };
