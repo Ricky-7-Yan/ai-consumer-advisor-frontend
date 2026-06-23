@@ -1,0 +1,15 @@
+{
+  "name": "ai-consumer-advisor",
+  "type": "web",
+  "env": {
+    "NODE_VERSION": "18"
+  },
+  "build": {
+    "command": "npm install",
+    "outputDir": "."
+  },
+  "run": {
+    "command": "node backend/server.js",
+    "port": 3002
+  }
+}
