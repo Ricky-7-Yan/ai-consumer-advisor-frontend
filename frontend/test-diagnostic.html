@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诊断报告测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            min-height: 100vh;
+            padding: 40px;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: rgba(255,255,255,0.6);
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .score-circle {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        .score-circle svg {
+            transform: rotate(-90deg);
+        }
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.6);
+        }
+        .risk-distribution {
+            display: flex;
+            gap: 16px;
+        }
+        .risk-item {
+            flex: 1;
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+        }
+        .risk-high { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .risk-medium { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .risk-low { background: rgba(16,185,129,0.1); color: #10b981; }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            flex-direction: column;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        .btn-refresh {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .btn-refresh:hover {
+            opacity: 0.9;
+        }
+        .error-message {
+            color: #ef4444;
+            padding: 16px;
+            background: rgba(239,68,68,0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 消费习惯诊断报告</h1>
+            <p>基于您的消费分析记录，生成个性化诊断</p>
+            <button class="btn-refresh" onclick="loadReport()">刷新报告</button>
+        </div>
+
+        <div id="report-content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <div>正在生成诊断报告...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiBaseUrl = 'http://localhost:3002';
+        const userId = 1;
+
+        async function fetchDiagnosticReport() {
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/diagnostic/${userId}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                return { error: error.message };
+            }
+        }
+
+        async function loadReport() {
+            const container = document.getElementById('report-content');
+            
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <div>正在生成诊断报告...</div>
+                </div>
+            `;
+
+            try {
+                console.log('Fetching diagnostic report...');
+                const report = await fetchDiagnosticReport();
+                console.log('Report received:', report);
+
+                if (report.error) {
+                    container.innerHTML = `
+                        <div class="glass-card">
+                            <div class="empty-state">
+                                <div class="empty-icon">⚠️</div>
+                                <div style="font-size: 20px; margin-bottom: 10px;">加载失败</div>
+                                <div style="color: rgba(255,255,255,0.6);">${report.error}</div>
+                                <button class="btn-refresh" onclick="loadReport()">重试</button>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (!report.hasData) {
+                    container.innerHTML = `
+                        <div class="glass-card">
+                            <div class="empty-state">
+                                <div class="empty-icon">📊</div>
+                                <div style="font-size: 20px; margin-bottom: 10px;">暂无足够数据</div>
+                                <div style="color: rgba(255,255,255,0.6);">${report.message}</div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const scoreColor = report.overview.rationalityScore >= 80 ? '#10b981' : 
+                                   report.overview.rationalityScore >= 60 ? '#3b82f6' :
+                                   report.overview.rationalityScore >= 40 ? '#f59e0b' : '#ef4444';
+
+                container.innerHTML = `
+                    <!-- 理性指数卡片 -->
+                    <div class="glass-card">
+                        <div style="display: flex; align-items: center; gap: 30px;">
+                            <div class="score-circle">
+                                <svg viewBox="0 0 120 120" width="120" height="120">
+                                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
+                                    <circle cx="60" cy="60" r="52" fill="none" stroke="${scoreColor}" stroke-width="12"
+                                        stroke-dasharray="${report.overview.rationalityScore * 3.27} 327"
+                                        stroke-linecap="round"/>
+                                </svg>
+                                <div class="score-value">
+                                    <div style="font-size: 28px; font-weight: 700; color: ${scoreColor};">${report.overview.rationalityScore}</div>
+                                    <div style="font-size: 11px; color: rgba(255,255,255,0.6);">理性指数</div>
+                                </div>
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">
+                                    ${report.conclusions[0]?.title || '诊断中...'}
+                                </div>
+                                <div style="color: rgba(255,255,255,0.6); font-size: 14px; line-height: 1.6;">
+                                    ${report.conclusions[0]?.content || ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 统计数据 -->
+                    <div class="stats-grid">
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: #667eea;">${report.overview.totalAnalyzed}</div>
+                            <div class="stat-label">累计分析</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: #10b981;">¥${report.overview.totalSaved.toLocaleString()}</div>
+                            <div class="stat-label">累计节省</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: #ef4444;">${report.overview.rejectRate}%</div>
+                            <div class="stat-label">拒绝率</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: #f59e0b;">¥${report.overview.monthlySaved.toLocaleString()}</div>
+                            <div class="stat-label">本月节省</div>
+                        </div>
+                    </div>
+
+                    <!-- 风险分布 -->
+                    <div class="glass-card">
+                        <h3 style="font-size: 16px; margin-bottom: 16px;">风险分布</h3>
+                        <div class="risk-distribution">
+                            <div class="risk-item">
+                                <div style="font-size: 24px; font-weight: 700;">${report.riskDistribution.high}</div>
+                                <div style="font-size: 12px;">高风险</div>
+                            </div>
+                            <div class="risk-item">
+                                <div style="font-size: 24px; font-weight: 700;">${report.riskDistribution.medium}</div>
+                                <div style="font-size: 12px;">中风险</div>
+                            </div>
+                            <div class="risk-item">
+                                <div style="font-size: 24px; font-weight: 700;">${report.riskDistribution.low}</div>
+                                <div style="font-size: 12px;">低风险</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 高频营销套路 -->
+                    ${report.commonTactics?.length > 0 ? `
+                        <div class="glass-card">
+                            <h3 style="font-size: 16px; margin-bottom: 16px;">您最常遇到的营销套路 TOP5</h3>
+                            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                                ${report.commonTactics.map((item, idx) => `
+                                    <div style="padding: 12px 20px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 20px; display: flex; align-items: center; gap: 8px;">
+                                        <span style="font-weight: 700; color: #ef4444;">${idx + 1}</span>
+                                        <span>${item.tactic}</span>
+                                        <span style="font-size: 12px; color: rgba(255,255,255,0.6);">×${item.count}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- 问题诊断 -->
+                    ${report.issues?.length > 0 ? `
+                        <div class="glass-card">
+                            <h3 style="font-size: 16px; margin-bottom: 16px;">⚠️ 问题诊断</h3>
+                            ${report.issues.map(issue => `
+                                <div style="padding: 16px; background: rgba(245,158,11,0.1); border-radius: 12px; margin-bottom: 12px;">
+                                    <div style="font-weight: 600; margin-bottom: 4px;">${issue.title}</div>
+                                    <div style="font-size: 14px; color: rgba(255,255,255,0.6);">${issue.content}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <!-- 改进建议 -->
+                    ${report.recommendations?.length > 0 ? `
+                        <div class="glass-card">
+                            <h3 style="font-size: 16px; margin-bottom: 16px;">💡 改进建议</h3>
+                            ${report.recommendations.map((rec, idx) => `
+                                <div style="padding: 16px; background: rgba(59,130,246,0.1); border-radius: 12px; margin-bottom: 12px;">
+                                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                        <span style="font-weight: 700; color: #3b82f6;">${idx + 1}.</span>
+                                        <span style="font-size: 14px; line-height: 1.5;">${rec.content}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <!-- 个人行为准则 -->
+                    <div class="glass-card">
+                        <h3 style="font-size: 16px; margin-bottom: 16px;">📝 您的个人购物准则</h3>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            ${report.personalRules?.map((rule, idx) => `
+                                <div style="display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: rgba(16,185,129,0.1); border-radius: 10px;">
+                                    <span style="width: 24px; height: 24px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;">${idx + 1}</span>
+                                    <span style="font-size: 14px; line-height: 1.5;">${rule}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 生成时间 -->
+                    <div style="text-align: center; padding: 20px; color: rgba(255,255,255,0.4); font-size: 12px;">
+                        报告生成时间: ${new Date(report.generatedAt).toLocaleString('zh-CN')}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Load error:', error);
+                container.innerHTML = `
+                    <div class="glass-card">
+                        <div class="empty-state">
+                            <div class="empty-icon">❌</div>
+                            <div style="font-size: 20px; margin-bottom: 10px;">加载失败</div>
+                            <div style="color: rgba(255,255,255,0.6);">${error.message}</div>
+                            <button class="btn-refresh" onclick="loadReport()">重试</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // 页面加载时自动加载报告
+        window.onload = loadReport;
+    </script>
+</body>
+</html>

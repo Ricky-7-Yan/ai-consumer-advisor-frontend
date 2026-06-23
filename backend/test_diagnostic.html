@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>诊断报告测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            max-height: 500px;
+        }
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <h1>诊断报告功能测试</h1>
+    
+    <div>
+        <button onclick="testAPI()">测试 API</button>
+        <button onclick="testRender()">测试 渲染</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script src="api.js"></script>
+    <script>
+        class TestAPI {
+            constructor() {
+                this.apiBaseUrl = 'http://localhost:3002';
+                this.userId = 1;
+            }
+
+            async getDiagnostic() {
+                try {
+                    const response = await fetch(`${this.apiBaseUrl}/api/diagnostic/${this.userId}`);
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    console.error('API Error:', error);
+                    return { error: error.message };
+                }
+            }
+        }
+
+        const testAPI = new TestAPI();
+
+        function log(message, isError = false) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = isError ? 'test-result error' : 'test-result success';
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        async function testAPI() {
+            log('正在测试 API...');
+            try {
+                const report = await testAPI.getDiagnostic();
+                console.log('API Response:', report);
+                
+                if (report.error) {
+                    log(`API 错误: ${report.error}`, true);
+                } else if (!report.hasData) {
+                    log(`API 返回无数据: ${report.message}`);
+                } else {
+                    log(`
+                        <strong>API 测试成功！</strong><br>
+                        - 理性指数: ${report.overview.rationalityScore}<br>
+                        - 累计分析: ${report.overview.totalAnalyzed} 次<br>
+                        - 累计节省: ¥${report.overview.totalSaved}<br>
+                        - 拒绝率: ${report.overview.rejectRate}%<br>
+                        - 结论: ${report.conclusions[0]?.title || '无'}
+                    `);
+                }
+            } catch (error) {
+                log(`测试失败: ${error.message}`, true);
+            }
+        }
+
+        async function testRender() {
+            log('正在测试渲染...');
+            try {
+                const report = await testAPI.getDiagnostic();
+                
+                if (!report.hasData) {
+                    log(`无法渲染：${report.message}`);
+                    return;
+                }
+
+                // 模拟渲染
+                const container = document.createElement('div');
+                container.style.cssText = 'padding: 20px; background: rgba(255,255,255,0.1); border-radius: 12px; margin-top: 20px;';
+                
+                container.innerHTML = `
+                    <h2>理性指数: ${report.overview.rationalityScore}</h2>
+                    <p>累计分析: ${report.overview.totalAnalyzed} 次</p>
+                    <p>累计节省: ¥${report.overview.totalSaved.toLocaleString()}</p>
+                    <p>拒绝率: ${report.overview.rejectRate}%</p>
+                    <p>本月节省: ¥${report.overview.monthlySaved.toLocaleString()}</p>
+                    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;">
+                    <h3>风险分布</h3>
+                    <p>高风险: ${report.riskDistribution.high} 次</p>
+                    <p>中风险: ${report.riskDistribution.medium} 次</p>
+                    <p>低风险: ${report.riskDistribution.low} 次</p>
+                    <hr style="border-color: rgba(255,255,255,0.2); margin: 20px 0;">
+                    <h3>结论</h3>
+                    <p><strong>${report.conclusions[0]?.title || '无'}</strong></p>
+                    <p>${report.conclusions[0]?.content || ''}</p>
+                `;
+                
+                document.body.appendChild(container);
+                log('渲染测试成功！');
+            } catch (error) {
+                log(`渲染失败: ${error.message}`, true);
+                console.error('Render Error:', error);
+            }
+        }
+
+        // 自动运行API测试
+        window.onload = () => {
+            testAPI();
+        };
+    </script>
+</body>
+</html>

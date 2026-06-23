@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI消费防冲动理性参谋 - 智能消费决策助手</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500;600;700;800;900&family=Black+Ops+One&family=Chakra+Petch:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Russo+One&family=Teko:wght@300;400;500;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #00f0ff;
+            --secondary: #a855f7;
+            --accent: #06b6d4;
+            --gold: #fbbf24;
+            --dark-bg: #000308;
+            --gradient-main: linear-gradient(135deg, #00f0ff 0%, #a855f7 50%, #ec4899 100%);
+            --gradient-gold: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            --font-display: 'Black Ops One', 'Orbitron', sans-serif;
+            --font-tech: 'Exo 2', 'Rajdhani', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+            --font-hero: 'Russo One', 'Orbitron', 'Chakra Petch', sans-serif;
+        }
+        
+        body {
+            font-family: var(--font-tech);
+            background: var(--dark-bg);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* 高级暗角效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.4) 100%);
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* HUD边框效果 */
+        .hud-frame {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        .hud-frame::before,
+        .hud-frame::after {
+            content: '';
+            position: absolute;
+            background: linear-gradient(90deg, rgba(0, 240, 255, 0.1), rgba(168, 85, 247, 0.05), rgba(0, 240, 255, 0.1));
+        }
+        
+        .hud-frame::before {
+            top: 0; left: 0; right: 0;
+            height: 1px;
+        }
+        
+        .hud-frame::after {
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+        }
+        
+        .hud-corners {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 999;
+        }
+        
+        .hud-corner {
+            position: absolute;
+            width: 60px; height: 60px;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+        }
+        
+        .hud-corner.top-left {
+            top: 20px; left: 20px;
+            border-right: none; border-bottom: none;
+        }
+        
+        .hud-corner.top-right {
+            top: 20px; right: 20px;
+            border-left: none; border-bottom: none;
+        }
+        
+        .hud-corner.bottom-left {
+            bottom: 20px; left: 20px;
+            border-right: none; border-top: none;
+        }
+        
+        .hud-corner.bottom-right {
+            bottom: 20px; right: 20px;
+            border-left: none; border-top: none;
+        }
+        
+        .bg-layer {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 0;
+        }
+        
+        .bg-gradient {
+            background: 
+                radial-gradient(ellipse at 10% 10%, rgba(0, 240, 255, 0.18) 0%, transparent 40%),
+                radial-gradient(ellipse at 90% 90%, rgba(168, 85, 247, 0.18) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(251, 191, 36, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 20% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 50%),
+                linear-gradient(180deg, #000308 0%, #0a0f25 30%, #100a28 50%, #0a0f25 70%, #000308 100%);
+        }
+        
+        /* 网格线层 */
+        .grid-lines {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1;
+            pointer-events: none;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridMove 30s linear infinite;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+        
+        /* 斜向网格 */
+        .diagonal-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 80px,
+                rgba(168, 85, 247, 0.02) 80px,
+                rgba(168, 85, 247, 0.02) 81px
+            ),
+            repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 80px,
+                rgba(0, 240, 255, 0.02) 80px,
+                rgba(0, 240, 255, 0.02) 81px
+            );
+            animation: diagonalGridMove 40s linear infinite;
+        }
+        
+        @keyframes diagonalGridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(81px, 81px); }
+        }
+        
+        .hex-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%2300f0ff' fill-opacity='0.03'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: hexScroll 40s linear infinite;
+        }
+        
+        @keyframes hexScroll {
+            from { transform: translate(0, 0); }
+            to { transform: translate(28px, 49px); }
+        }
+        
+        .aurora {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: 
+                conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(0, 240, 255, 0.08) 60deg, transparent 120deg),
+                conic-gradient(from 120deg at 50% 50%, transparent 0deg, rgba(168, 85, 247, 0.08) 60deg, transparent 120deg),
+                conic-gradient(from 240deg at 50% 50%, transparent 0deg, rgba(236, 72, 153, 0.08) 60deg, transparent 120deg);
+            animation: auroraRotate 60s linear infinite;
+        }
+        
+        @keyframes auroraRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 动态光晕层 */
+        .dynamic-glow {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .glow-spot {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            animation: glowFloat 15s ease-in-out infinite;
+        }
+        
+        .glow-spot.one {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, transparent 70%);
+            top: -200px; left: -100px;
+            animation-duration: 20s;
+        }
+        
+        .glow-spot.two {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+            bottom: -150px; right: -50px;
+            animation-duration: 25s;
+            animation-direction: reverse;
+        }
+        
+        .glow-spot.three {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
+            top: 40%; right: 20%;
+            animation-duration: 18s;
+        }
+        
+        .glow-spot.four {
+            width: 450px; height: 450px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+            bottom: 30%; left: 10%;
+            animation-duration: 22s;
+            animation-direction: reverse;
+        }
+        
+        @keyframes glowFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+            25% { transform: translate(50px, -30px) scale(1.1); opacity: 0.7; }
+            50% { transform: translate(20px, 50px) scale(0.9); opacity: 0.4; }
+            75% { transform: translate(-30px, -20px) scale(1.05); opacity: 0.6; }
+        }
+        
+        /* 数据节点网络 */
+        .data-network {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .data-node {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: nodePulse 3s ease-in-out infinite;
+            box-shadow: 0 0 10px var(--primary);
+        }
+        
+        .data-node::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px; height: 12px;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 50%;
+            animation: nodeRing 2s ease-out infinite;
+        }
+        
+        @keyframes nodePulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.5); }
+        }
+        
+        @keyframes nodeRing {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+        
+        .data-connection {
+            position: absolute;
+            background: linear-gradient(90deg, rgba(0, 240, 255, 0.3), rgba(168, 85, 247, 0.1));
+            height: 1px;
+            transform-origin: left center;
+            animation: connectionGlow 4s ease-in-out infinite;
+        }
+        
+        @keyframes connectionGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* 流动光线 */
+        .flowing-lights {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 3;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .flow-line {
+            position: absolute;
+            width: 200px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.6), transparent);
+            animation: flowLight 3s ease-in-out infinite;
+        }
+        
+        @keyframes flowLight {
+            0% { transform: translateX(-100%); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(400%); opacity: 0; }
+        }
+        
+        /* 雷达扫描效果 */
+        .radar-scan {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px; height: 600px;
+            z-index: 3;
+            pointer-events: none;
+        }
+        
+        .radar-circle {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px solid rgba(0, 240, 255, 0.05);
+        }
+        
+        .radar-circle.one { width: 100%; height: 100%; }
+        .radar-circle.two { width: 70%; height: 70%; }
+        .radar-circle.three { width: 40%; height: 40%; }
+        
+        .radar-beam {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 50%; height: 1px;
+            background: linear-gradient(90deg, rgba(0, 240, 255, 0.3), transparent);
+            transform-origin: left center;
+            animation: radarRotate 8s linear infinite;
+        }
+        
+        .radar-beam::before {
+            content: '';
+            position: absolute;
+            top: -100px; left: 0;
+            width: 1px; height: 200px;
+            background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.2), transparent);
+            transform: rotate(45deg);
+            transform-origin: bottom center;
+        }
+        
+        @keyframes radarRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 赛博朋克扫描线 */
+        .cyber-scanlines {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 5;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 1px,
+                rgba(0, 240, 255, 0.02) 1px,
+                rgba(0, 240, 255, 0.02) 3px
+            );
+            animation: cyberScanMove 0.5s linear infinite;
+        }
+        
+        @keyframes cyberScanMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(3px); }
+        }
+        
+        /* 能量脉冲波 */
+        .energy-pulses {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 3;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .pulse-wave {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            animation: pulseExpand 6s ease-out infinite;
+        }
+        
+        @keyframes pulseExpand {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+        
+        /* Matrix风格下落字符 */
+        .matrix-rain {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+            font-family: var(--font-mono);
+            font-size: 14px;
+        }
+        
+        .matrix-column {
+            position: absolute;
+            top: -100%;
+            animation: matrixFall linear infinite;
+        }
+        
+        .matrix-char {
+            display: block;
+            color: rgba(0, 240, 255, 0.15);
+            line-height: 1.5;
+        }
+        
+        .matrix-char.active {
+            color: rgba(0, 240, 255, 0.4);
+        }
+        
+        .matrix-char.head {
+            color: rgba(0, 240, 255, 0.8);
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+        }
+        
+        @keyframes matrixFall {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(calc(100vh + 200%)); }
+        }
+        
+        /* 几何碎片 */
+        .geometric-shards {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .shard {
+            position: absolute;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(168, 85, 247, 0.05));
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+            animation: shardFloat 12s ease-in-out infinite;
+        }
+        
+        @keyframes shardFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-30px) rotate(180deg); opacity: 0.6; }
+        }
+        
+        /* 旋转立方体框架 */
+        .cube-frame {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px; height: 300px;
+            z-index: 3;
+            pointer-events: none;
+            perspective: 1000px;
+        }
+        
+        .cube {
+            width: 100%; height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: cubeRotate 20s linear infinite;
+        }
+        
+        .cube-face {
+            position: absolute;
+            width: 100%; height: 100%;
+            border: 1px solid rgba(0, 240, 255, 0.08);
+            background: rgba(0, 240, 255, 0.02);
+        }
+        
+        .cube-face.front { transform: translateZ(150px); }
+        .cube-face.back { transform: rotateY(180deg) translateZ(150px); }
+        .cube-face.left { transform: rotateY(-90deg) translateZ(150px); }
+        .cube-face.right { transform: rotateY(90deg) translateZ(150px); }
+        .cube-face.top { transform: rotateX(90deg) translateZ(150px); }
+        .cube-face.bottom { transform: rotateX(-90deg) translateZ(150px); }
+        
+        @keyframes cubeRotate {
+            0% { transform: rotateX(0deg) rotateY(0deg); }
+            100% { transform: rotateX(360deg) rotateY(360deg); }
+        }
+        
+        /* 数据流方向指示器 */
+        .data-flow-indicators {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 4;
+            pointer-events: none;
+        }
+        
+        .flow-indicator {
+            position: absolute;
+            width: 60px; height: 60px;
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            border-radius: 8px;
+            animation: indicatorPulse 4s ease-in-out infinite;
+        }
+        
+        .flow-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 4px; height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--primary);
+        }
+        
+        .flow-indicator::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 20px; height: 1px;
+            background: rgba(0, 240, 255, 0.3);
+            transform-origin: left center;
+            animation: flowArrow 2s linear infinite;
+        }
+        
+        @keyframes indicatorPulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        
+        @keyframes flowArrow {
+            0% { transform: translate(-10px, -50%) rotate(0deg); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translate(30px, -50%) rotate(0deg); opacity: 0; }
+        }
+        
+        /* 动态边框发光 */
+        .border-glow {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 998;
+            pointer-events: none;
+        }
+        
+        .border-glow::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.3), rgba(168, 85, 247, 0.3), rgba(0, 240, 255, 0.3), transparent);
+            animation: borderGlowMove 3s ease-in-out infinite;
+        }
+        
+        .border-glow::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.3), rgba(0, 240, 255, 0.3), rgba(168, 85, 247, 0.3), transparent);
+            animation: borderGlowMove 3s ease-in-out infinite reverse;
+        }
+        
+        @keyframes borderGlowMove {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .energy-rings {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px; height: 900px;
+            z-index: 3;
+            pointer-events: none;
+        }
+        
+        .energy-ring {
+            position: absolute;
+            border-radius: 50%;
+            animation: ringPulse 8s ease-in-out infinite;
+        }
+        
+        .energy-ring.one {
+            width: 100%; height: 100%;
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.05), inset 0 0 30px rgba(0, 240, 255, 0.03);
+            animation-duration: 10s;
+        }
+        
+        .energy-ring.two {
+            width: 85%; height: 85%;
+            top: 7.5%; left: 7.5%;
+            border: 1px solid rgba(168, 85, 247, 0.1);
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.05), inset 0 0 30px rgba(168, 85, 247, 0.03);
+            animation-duration: 12s;
+            animation-direction: reverse;
+        }
+        
+        .energy-ring.three {
+            width: 70%; height: 70%;
+            top: 15%; left: 15%;
+            border: 1px solid rgba(0, 240, 255, 0.08);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.04), inset 0 0 20px rgba(0, 240, 255, 0.02);
+            animation-duration: 8s;
+        }
+        
+        .energy-ring.four {
+            width: 55%; height: 55%;
+            top: 22.5%; left: 22.5%;
+            border: 1px solid rgba(168, 85, 247, 0.08);
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.04), inset 0 0 20px rgba(168, 85, 247, 0.02);
+            animation-duration: 14s;
+            animation-direction: reverse;
+        }
+        
+        .energy-ring::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: 50%;
+            width: 40px; height: 4px;
+            background: var(--gradient-main);
+            border-radius: 2px;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.6);
+            transform: translateX(-50%);
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+        
+        .energy-ring::after {
+            content: '';
+            position: absolute;
+            top: 50%; right: -2px;
+            width: 4px; height: 40px;
+            background: var(--gradient-main);
+            border-radius: 2px;
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
+            transform: translateY(-50%);
+            animation: glowPulse 2s ease-in-out infinite reverse;
+        }
+        
+        @keyframes ringPulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.03); }
+        }
+        
+        @keyframes glowPulse {
+            0%, 100% { opacity: 0.6; filter: brightness(1); }
+            50% { opacity: 1; filter: brightness(1.3); }
+        }
+        
+        .data-streams {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 4;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .data-stream {
+            position: absolute;
+            width: 1px;
+            background: linear-gradient(180deg, transparent, rgba(0, 240, 255, 0.4), transparent);
+            animation: streamFlow 4s ease-in-out infinite;
+        }
+        
+        @keyframes streamFlow {
+            0% { height: 0; top: -10%; opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { height: 300px; top: 110%; opacity: 0; }
+        }
+        
+        /* 高级扫描线效果 */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 5;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 240, 255, 0.01) 2px,
+                rgba(0, 240, 255, 0.01) 4px
+            );
+            animation: scanMove 8s linear infinite;
+        }
+        
+        @keyframes scanMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+        
+        /* 浮动粒子层 */
+        .particles-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 4;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--gradient-main);
+            animation: particleFloat 20s ease-in-out infinite;
+        }
+        
+        @keyframes particleFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+            25% { transform: translate(30px, -50px) scale(1.2); opacity: 0.6; }
+            50% { transform: translate(-20px, -100px) scale(0.8); opacity: 0.4; }
+            75% { transform: translate(50px, -50px) scale(1.1); opacity: 0.5; }
+        }
+        
+        /* 边框光效 */
+        .corner-glow {
+            position: fixed;
+            width: 400px; height: 400px;
+            pointer-events: none;
+            z-index: 3;
+        }
+        
+        .corner-glow.top-left {
+            top: -200px; left: -200px;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.15) 0%, transparent 70%);
+        }
+        
+        .corner-glow.bottom-right {
+            bottom: -200px; right: -200px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+        }
+        
+        .corner-glow.top-right {
+            top: -150px; right: -150px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, transparent 70%);
+        }
+        
+        .corner-glow.bottom-left {
+            bottom: -150px; left: -150px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+        }
+        
+        /* 玻璃拟态高级卡片 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+        
+        /* 脉冲环动画 */
+        .pulse-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            animation: pulseRing 3s ease-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes pulseRing {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        
+        .content-wrapper {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 64px;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            background: rgba(0, 3, 8, 0.5);
+            backdrop-filter: blur(40px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .header.scrolled {
+            padding: 14px 64px;
+            background: rgba(0, 3, 8, 0.85);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .logo-container:hover {
+            transform: scale(1.02);
+        }
+        
+        .logo-symbol {
+            width: 52px; height: 52px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-symbol svg {
+            width: 100%; height: 100%;
+            filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.5));
+            animation: logoFloat 6s ease-in-out infinite, logoGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-4px) rotate(2deg); }
+        }
+        
+        @keyframes logoGlow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 40px rgba(0, 240, 255, 0.7)) drop-shadow(0 0 60px rgba(168, 85, 247, 0.5)); }
+        }
+        
+        .logo-symbol:hover svg {
+            transform: scale(1.1) rotate(5deg);
+            transition: transform 0.5s ease;
+        }
+        
+        .logo-text {
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 900;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 3px;
+            position: relative;
+        }
+        
+        .logo-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0;
+            z-index: -1;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: blur(12px);
+            opacity: 0.4;
+        }
+        
+        .nav-menu {
+            display: flex;
+            gap: 48px;
+            list-style: none;
+        }
+        
+        .nav-menu a {
+            font-family: var(--font-tech);
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            position: relative;
+            transition: color 0.3s ease;
+            padding: 8px 0;
+        }
+        
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 0; height: 2px;
+            background: var(--gradient-main);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 1px;
+        }
+        
+        .nav-menu a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+        
+        .hero-section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 64px;
+            text-align: center;
+            position: relative;
+            perspective: 1500px;
+        }
+        
+        .hero-watermark {
+            position: absolute;
+            top: 30%; left: 5%;
+            font-family: var(--font-display);
+            font-size: 150px;
+            color: rgba(0, 240, 255, 0.02);
+            letter-spacing: 20px;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            pointer-events: none;
+            text-shadow: 0 0 50px rgba(0, 240, 255, 0.1);
+        }
+        
+        .hero-watermark.right {
+            top: 20%; right: 5%;
+            left: auto;
+            transform: rotate(0deg);
+            text-shadow: 0 0 50px rgba(168, 85, 247, 0.1);
+        }
+        
+        .tagline {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--primary);
+            letter-spacing: 14px;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+            animation: fadeInScale 1s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            position: relative;
+        }
+        
+        .tagline::before, .tagline::after {
+            content: '';
+            width: 80px; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.6));
+        }
+        
+        .tagline::after {
+            background: linear-gradient(270deg, transparent, rgba(0, 240, 255, 0.6));
+        }
+        
+        .main-title {
+            font-family: var(--font-hero);
+            font-size: 80px;
+            font-weight: 700;
+            line-height: 1.05;
+            margin-bottom: 32px;
+            animation: fadeInUp 1s ease-out 0.2s both;
+            position: relative;
+            transform-style: preserve-3d;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        
+        .main-title .line-1 {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(0, 240, 255, 0.9));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            text-shadow: 0 0 80px rgba(0, 240, 255, 0.3);
+            position: relative;
+            letter-spacing: 0.15em;
+        }
+        
+        .main-title .line-1::after {
+            content: '消费防冲动';
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(168, 85, 247, 0.3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: blur(3px);
+            z-index: -1;
+            animation: textGlitch 3s ease-in-out infinite;
+        }
+        
+        .main-title .line-2 {
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: block;
+            font-size: 96px;
+            filter: drop-shadow(0 0 50px rgba(0, 240, 255, 0.4));
+            animation: textGlowPulse 4s ease-in-out infinite;
+            margin-top: 8px;
+            position: relative;
+            letter-spacing: 0.2em;
+        }
+        
+        .main-title .line-2::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120%;
+            height: 200%;
+            background: radial-gradient(ellipse, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .main-title .line-2::after {
+            content: '理性参谋';
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.4), rgba(236, 72, 153, 0.4));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: blur(4px);
+            z-index: -1;
+            animation: textGlitch 4s ease-in-out infinite reverse;
+        }
+        
+        @keyframes textGlitch {
+            0%, 100% { transform: translate(0, 0); opacity: 0.5; }
+            10% { transform: translate(-2px, -1px); opacity: 0.6; }
+            20% { transform: translate(2px, 1px); opacity: 0.4; }
+            30% { transform: translate(-1px, 2px); opacity: 0.5; }
+            40% { transform: translate(1px, -2px); opacity: 0.6; }
+            50% { transform: translate(0, 0); opacity: 0.5; }
+            60% { transform: translate(-3px, 1px); opacity: 0.4; }
+            70% { transform: translate(3px, -1px); opacity: 0.6; }
+            80% { transform: translate(-1px, -2px); opacity: 0.5; }
+            90% { transform: translate(1px, 2px); opacity: 0.4; }
+        }
+        
+        @keyframes textGlowPulse {
+            0%, 100% { filter: drop-shadow(0 0 40px rgba(0, 240, 255, 0.3)); }
+            50% { filter: drop-shadow(0 0 60px rgba(0, 240, 255, 0.5)) drop-shadow(0 0 90px rgba(168, 85, 247, 0.3)); }
+        }
+        
+        .subtitle {
+            font-family: var(--font-tech);
+            font-size: 21px;
+            color: rgba(255, 255, 255, 0.5);
+            max-width: 750px;
+            line-height: 1.9;
+            margin-bottom: 72px;
+            animation: fadeInUp 1s ease-out 0.4s both;
+            letter-spacing: 0.5px;
+            font-weight: 400;
+        }
+        
+        .cta-wrapper {
+            display: flex;
+            gap: 28px;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+        
+        .btn-primary {
+            font-family: var(--font-tech);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            padding: 22px 64px;
+            border: none;
+            border-radius: 50px;
+            background: var(--gradient-main);
+            color: #000;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.3), 0 0 80px rgba(168, 85, 247, 0.2);
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.8s ease;
+        }
+        
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 52px;
+            background: var(--gradient-main);
+            opacity: 0;
+            filter: blur(15px);
+            z-index: -1;
+            transition: opacity 0.5s ease;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 240, 255, 0.5), 0 0 120px rgba(168, 85, 247, 0.4);
+        }
+        
+        .btn-primary:hover::after {
+            opacity: 0.6;
+        }
+        
+        .btn-secondary {
+            font-family: var(--font-tech);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 5px;
+            padding: 22px 64px;
+            border: 1.5px solid rgba(0, 240, 255, 0.4);
+            border-radius: 50px;
+            background: rgba(0, 240, 255, 0.02);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-secondary::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 52px;
+            background: transparent;
+            border: 2px solid transparent;
+            background: linear-gradient(135deg, var(--primary), var(--secondary)) border-box;
+            mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.4), inset 0 0 30px rgba(0, 240, 255, 0.05);
+            transform: translateY(-6px) scale(1.02);
+            background: rgba(0, 240, 255, 0.08);
+        }
+        
+        .btn-secondary:hover::before {
+            opacity: 1;
+        }
+        
+        .btn-secondary:hover::after {
+            opacity: 1;
+        }
+        
+        .scroll-hint {
+            position: absolute;
+            bottom: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            animation: floatUpDown 3s ease-in-out infinite;
+        }
+        
+        .scroll-hint svg {
+            width: 28px; height: 28px;
+            fill: rgba(0, 240, 255, 0.4);
+        }
+        
+        .scroll-hint span {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+        
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(12px); }
+        }
+        
+        .features-section {
+            padding: 140px 64px;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 1px solid rgba(0, 240, 255, 0.05);
+        }
+        
+        .section-intro {
+            text-align: center;
+            margin-bottom: 96px;
+        }
+        
+        .section-tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--secondary);
+            letter-spacing: 10px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 46px;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 28px;
+        }
+        
+        .section-desc {
+            font-family: var(--font-tech);
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.5);
+            max-width: 550px;
+            margin: 0 auto;
+            line-height: 1.9;
+            font-weight: 400;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 56px 36px;
+            text-align: center;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: var(--gradient-main);
+            transform: scaleX(0);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+        
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.08) 0%, transparent 60%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .feature-card:hover::after {
+            opacity: 1;
+        }
+        
+        .feature-card:hover {
+            border-color: rgba(0, 240, 255, 0.3);
+            transform: translateY(-12px) scale(1.02);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 240, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .feature-icon-box {
+            width: 96px; height: 96px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 32px;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+        
+        .feature-icon-box::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 32px;
+            background: var(--gradient-main);
+            opacity: 0;
+            filter: blur(15px);
+            transition: opacity 0.5s ease;
+            z-index: -1;
+        }
+        
+        .feature-icon-box::after {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 30px;
+            border: 1px solid transparent;
+            background: var(--gradient-main) border-box;
+            mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .feature-card:hover .feature-icon-box {
+            transform: scale(1.15);
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.3);
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+        
+        .feature-card:hover .feature-icon-box::before {
+            opacity: 0.5;
+        }
+        
+        .feature-card:hover .feature-icon-box::after {
+            opacity: 1;
+        }
+        
+        .feature-icon {
+            font-size: 40px;
+            filter: drop-shadow(0 0 20px rgba(0, 240, 255, 0.4));
+            transition: transform 0.5s ease;
+        }
+        
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1);
+        }
+        
+        .feature-name {
+            font-family: var(--font-display);
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #fff;
+            letter-spacing: 1px;
+            position: relative;
+        }
+        
+        .feature-text {
+            font-family: var(--font-tech);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.55);
+            line-height: 1.9;
+            font-weight: 400;
+        }
+        
+        .stats-section {
+            padding: 140px 64px;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.03) 0%, transparent 60%);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 56px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0; height: 0;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+            transition: width 0.5s ease, height 0.5s ease;
+            border-radius: 50%;
+        }
+        
+        .stat-card:hover {
+            border-color: rgba(0, 240, 255, 0.2);
+            transform: translateY(-6px);
+        }
+        
+        .stat-card:hover::before {
+            width: 200px; height: 200px;
+        }
+        
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: 64px;
+            font-weight: 900;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .technology-section {
+            padding: 140px 64px;
+            background: rgba(0, 0, 0, 0.15);
+            border-top: 1px solid rgba(0, 240, 255, 0.05);
+        }
+        
+        .tech-showcase {
+            max-width: 1100px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .tech-icon {
+            font-size: 120px;
+            margin-bottom: 48px;
+            filter: drop-shadow(0 0 50px rgba(0, 240, 255, 0.2));
+            animation: techFloat 8s ease-in-out infinite;
+        }
+        
+        @keyframes techFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(2deg); }
+            50% { transform: translateY(-5px) rotate(-1deg); }
+            75% { transform: translateY(-20px) rotate(1deg); }
+        }
+        
+        .tech-heading {
+            font-family: var(--font-display);
+            font-size: 36px;
+            margin-bottom: 28px;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tech-description {
+            font-family: var(--font-tech);
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 2.1;
+            max-width: 800px;
+            margin: 0 auto;
+            font-weight: 400;
+        }
+        
+        .footer {
+            padding: 80px 64px;
+            text-align: center;
+            border-top: 1px solid rgba(0, 240, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .footer-brand {
+            font-family: var(--font-display);
+            font-size: 22px;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 32px;
+            letter-spacing: 5px;
+        }
+        
+        .footer-copy {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @media (max-width: 1024px) {
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .main-title { font-size: 60px; }
+            .main-title .line-2 { font-size: 72px; }
+        }
+        
+        @media (max-width: 768px) {
+            .header { padding: 14px 24px; }
+            .nav-menu { display: none; }
+            .hero-section { padding: 0 24px; }
+            .main-title { font-size: 44px; }
+            .main-title .line-2 { font-size: 52px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .cta-wrapper { flex-direction: column; gap: 20px; }
+            .btn-primary, .btn-secondary { padding: 18px 48px; }
+            .tagline::before, .tagline::after { width: 40px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-frame"></div>
+    <div class="hud-corners">
+        <div class="hud-corner top-left"></div>
+        <div class="hud-corner top-right"></div>
+        <div class="hud-corner bottom-left"></div>
+        <div class="hud-corner bottom-right"></div>
+    </div>
+    
+    <div class="bg-layer bg-gradient"></div>
+    <div class="grid-lines"></div>
+    <div class="diagonal-grid"></div>
+    <div class="hex-grid"></div>
+    <div class="aurora"></div>
+    
+    <div class="dynamic-glow">
+        <div class="glow-spot one"></div>
+        <div class="glow-spot two"></div>
+        <div class="glow-spot three"></div>
+        <div class="glow-spot four"></div>
+    </div>
+    
+    <div class="data-network" id="dataNetwork"></div>
+    <div class="flowing-lights" id="flowingLights"></div>
+    <div class="radar-scan">
+        <div class="radar-circle one"></div>
+        <div class="radar-circle two"></div>
+        <div class="radar-circle three"></div>
+        <div class="radar-beam"></div>
+    </div>
+    
+    <div class="energy-pulses" id="energyPulses"></div>
+    <div class="matrix-rain" id="matrixRain"></div>
+    <div class="geometric-shards" id="geometricShards"></div>
+    
+    <div class="cube-frame">
+        <div class="cube">
+            <div class="cube-face front"></div>
+            <div class="cube-face back"></div>
+            <div class="cube-face left"></div>
+            <div class="cube-face right"></div>
+            <div class="cube-face top"></div>
+            <div class="cube-face bottom"></div>
+        </div>
+    </div>
+    
+    <div class="data-flow-indicators" id="flowIndicators"></div>
+    
+    <div class="border-glow"></div>
+    <div class="cyber-scanlines"></div>
+    
+    <div class="energy-rings">
+        <div class="energy-ring one"></div>
+        <div class="energy-ring two"></div>
+        <div class="energy-ring three"></div>
+        <div class="energy-ring four"></div>
+    </div>
+    
+    <div class="data-streams" id="dataStreams"></div>
+    
+    <div class="scanlines"></div>
+    <div class="particles-container" id="particlesContainer"></div>
+    
+    <div class="corner-glow top-left"></div>
+    <div class="corner-glow top-right"></div>
+    <div class="corner-glow bottom-left"></div>
+    <div class="corner-glow bottom-right"></div>
+    
+    <div class="content-wrapper">
+        <header class="header" id="header">
+            <div class="logo-container">
+                <div class="logo-symbol">
+                    <svg viewBox="0 0 52 52" fill="none">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#00f0ff"/>
+                                <stop offset="50%" style="stop-color:#a855f7"/>
+                                <stop offset="100%" style="stop-color:#fbbf24"/>
+                            </linearGradient>
+                            <linearGradient id="logoGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#fbbf24"/>
+                                <stop offset="100%" style="stop-color:#00f0ff"/>
+                            </linearGradient>
+                            <filter id="logoGlow">
+                                <feGaussianBlur stdDeviation="2" result="blur"/>
+                                <feMerge>
+                                    <feMergeNode in="blur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+                        <!-- 外层六边形框架 -->
+                        <polygon points="26,4 44,14 44,38 26,48 8,38 8,14" stroke="url(#logoGrad)" stroke-width="1.2" fill="none" opacity="0.6"/>
+                        <!-- 内层菱形主体 -->
+                        <polygon points="26,10 38,22 26,42 14,22" stroke="url(#logoGrad)" stroke-width="1.5" fill="rgba(0,240,255,0.05)"/>
+                        <!-- 中心宝石切面效果 -->
+                        <polygon points="26,16 32,22 26,32 20,22" fill="url(#logoGrad)" opacity="0.8"/>
+                        <!-- 顶部光芒线条 -->
+                        <line x1="26" y1="4" x2="26" y2="10" stroke="#00f0ff" stroke-width="1" opacity="0.5"/>
+                        <line x1="44" y1="14" x2="38" y2="22" stroke="#a855f7" stroke-width="1" opacity="0.5"/>
+                        <line x1="44" y1="38" x2="32" y2="32" stroke="#fbbf24" stroke-width="1" opacity="0.5"/>
+                        <line x1="26" y1="48" x2="26" y2="42" stroke="#a855f7" stroke-width="1" opacity="0.5"/>
+                        <line x1="8" y1="38" x2="20" y2="32" stroke="#00f0ff" stroke-width="1" opacity="0.5"/>
+                        <line x1="8" y1="14" x2="14" y2="22" stroke="#fbbf24" stroke-width="1" opacity="0.5"/>
+                        <!-- 中心高光 -->
+                        <circle cx="26" cy="24" r="2" fill="#fff" opacity="0.9"/>
+                        <circle cx="26" cy="24" r="1" fill="#00f0ff"/>
+                    </svg>
+                </div>
+                <span class="logo-text" data-text="CONSUMER">CONSUMER</span>
+            </div>
+            
+            <nav class="nav-menu">
+                <li><a href="#features">功能</a></li>
+                <li><a href="#stats">数据</a></li>
+                <li><a href="#tech">技术</a></li>
+            </nav>
+        </header>
+        
+        <section class="hero-section">
+            <div class="hero-watermark">ADVISOR</div>
+            <div class="hero-watermark right">DECISION</div>
+            
+            <div class="tagline">SMART CONSUMPTION ANALYSIS</div>
+            
+            <h1 class="main-title">
+                <span class="line-1">消费防冲动</span>
+                <span class="line-2">理性参谋</span>
+            </h1>
+            
+            <p class="subtitle">基于先进算法，智能识别营销套路，科学评估消费风险，帮助您做出理性的消费决策。拒绝冲动消费，守护您的财富健康。</p>
+            
+            <div class="cta-wrapper">
+                <button class="btn-primary" onclick="startApp()">开始使用</button>
+                <button class="btn-secondary" onclick="scrollToFeatures()">了解更多</button>
+            </div>
+            
+            <div class="scroll-hint">
+                <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                <span>向下滚动</span>
+            </div>
+        </section>
+        
+        <section class="features-section" id="features">
+            <div class="section-intro">
+                <span class="section-tag">CORE CAPABILITIES</span>
+                <h2 class="section-title">核心能力</h2>
+                <p class="section-desc">六大核心功能，全方位守护您的消费理性，让每一次消费决策都更加明智</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-box">
+                        <div class="feature-icon">🔍</div>
+                    </div>
+                    <h3 class="feature-name">营销套路识别</h3>
+                    <p class="feature-text">智能识别限时抢购、饥饿营销、直播带货等多种常见营销套路，让消费陷阱无所遁形。</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-box">
+                        <div class="feature-icon">📊</div>
+                    </div>
+                    <h3 class="feature-name">风险评估系统</h3>
+                    <p class="feature-text">多维度风险评分模型，综合分析价格阈值、购买理由、冲动指数，给出科学决策建议。</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-box">
+                        <div class="feature-icon">💰</div>
+                    </div>
+                    <h3 class="feature-name">预算管理</h3>
+                    <p class="feature-text">智能预算分配，实时消费追踪，帮助您合理规划月度支出，实现财务自由。</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-box">
+                        <div class="feature-icon">📈</div>
+                    </div>
+                    <h3 class="feature-name">消费趋势分析</h3>
+                    <p class="feature-text">可视化图表展示消费趋势，洞察消费习惯，发现潜在的冲动消费模式。</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-box">
+                        <div class="feature-icon">🎯</div>
+                    </div>
+                    <h3 class="feature-name">个性化建议</h3>
+                    <p class="feature-text">基于您的消费历史和偏好，提供定制化的理性消费建议和省钱方案。</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon-box">
+                        <div class="feature-icon">🛡️</div>
+                    </div>
+                    <h3 class="feature-name">消费安全守护</h3>
+                    <p class="feature-text">实时监控高风险消费行为，智能预警潜在的消费陷阱，守护您的每一分钱。</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="stats-section" id="stats">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">50万+</div>
+                    <div class="stat-label">用户信赖</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">¥2.8亿</div>
+                    <div class="stat-label">累计节省</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">识别准确率</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0.5秒</div>
+                    <div class="stat-label">分析响应</div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="technology-section" id="tech">
+            <div class="tech-showcase">
+                <div class="tech-icon">⚡</div>
+                <h3 class="tech-heading">智能分析引擎</h3>
+                <p class="tech-description">采用先进的机器学习算法，结合海量消费数据进行深度训练，持续优化分析模型的精度。系统支持自然语言理解，能够深度解析商品描述和购买理由中的隐含信息，精准识别各种冲动消费信号，为您提供最可靠的消费决策参考。</p>
+            </div>
+        </section>
+        
+        <footer class="footer">
+            <div class="footer-brand">CONSUMER ADVISOR</div>
+            <div class="footer-copy">© 2026 | 理性消费，智慧生活</div>
+        </footer>
+    </div>
+    
+    <script>
+        function initDataStreams() {
+            const container = document.getElementById('dataStreams');
+            const count = 25;
+            for (let i = 0; i < count; i++) {
+                const stream = document.createElement('div');
+                stream.className = 'data-stream';
+                stream.style.left = Math.random() * 100 + '%';
+                stream.style.animationDuration = (3 + Math.random() * 4) + 's';
+                stream.style.animationDelay = Math.random() * 6 + 's';
+                container.appendChild(stream);
+            }
+        }
+        
+        function initParticles() {
+            const container = document.getElementById('particlesContainer');
+            const count = 20;
+            const colors = ['#00f0ff', '#a855f7', '#fbbf24', '#ec4899'];
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = 2 + Math.random() * 4;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.animationDuration = (15 + Math.random() * 20) + 's';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                container.appendChild(particle);
+            }
+        }
+        
+        function initDataNetwork() {
+            const container = document.getElementById('dataNetwork');
+            const nodeCount = 12;
+            const nodes = [];
+            
+            for (let i = 0; i < nodeCount; i++) {
+                const node = document.createElement('div');
+                node.className = 'data-node';
+                node.style.left = (10 + Math.random() * 80) + '%';
+                node.style.top = (10 + Math.random() * 80) + '%';
+                node.style.animationDelay = Math.random() * 3 + 's';
+                node.style.animationDuration = (2 + Math.random() * 2) + 's';
+                container.appendChild(node);
+                nodes.push({
+                    element: node,
+                    x: parseFloat(node.style.left),
+                    y: parseFloat(node.style.top)
+                });
+            }
+            
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const distance = Math.sqrt(
+                        Math.pow(nodes[i].x - nodes[j].x, 2) + 
+                        Math.pow(nodes[i].y - nodes[j].y, 2)
+                    );
+                    if (distance < 30) {
+                        const connection = document.createElement('div');
+                        connection.className = 'data-connection';
+                        const x1 = nodes[i].x;
+                        const y1 = nodes[i].y;
+                        const x2 = nodes[j].x;
+                        const y2 = nodes[j].y;
+                        const length = Math.sqrt(
+                            Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2)
+                        );
+                        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                        
+                        connection.style.left = x1 + '%';
+                        connection.style.top = y1 + '%';
+                        connection.style.width = length + '%';
+                        connection.style.transform = `rotate(${angle}deg)`;
+                        connection.style.animationDelay = Math.random() * 4 + 's';
+                        container.appendChild(connection);
+                    }
+                }
+            }
+        }
+        
+        function initFlowingLights() {
+            const container = document.getElementById('flowingLights');
+            const lineCount = 8;
+            
+            for (let i = 0; i < lineCount; i++) {
+                const line = document.createElement('div');
+                line.className = 'flow-line';
+                line.style.top = (10 + i * 12) + '%';
+                line.style.animationDelay = i * 0.4 + 's';
+                line.style.animationDuration = (2.5 + Math.random() * 1.5) + 's';
+                container.appendChild(line);
+            }
+            
+            for (let i = 0; i < lineCount / 2; i++) {
+                const line = document.createElement('div');
+                line.className = 'flow-line';
+                line.style.top = (15 + i * 20) + '%';
+                line.style.transform = 'rotate(90deg)';
+                line.style.left = (5 + i * 30) + '%';
+                line.style.animationDelay = (i * 0.5 + 1) + 's';
+                line.style.animationDuration = (2 + Math.random() * 2) + 's';
+                container.appendChild(line);
+            }
+        }
+        
+        function initEnergyPulses() {
+            const container = document.getElementById('energyPulses');
+            const pulseCount = 6;
+            
+            for (let i = 0; i < pulseCount; i++) {
+                const pulse = document.createElement('div');
+                pulse.className = 'pulse-wave';
+                const size = 100 + Math.random() * 200;
+                pulse.style.width = size + 'px';
+                pulse.style.height = size + 'px';
+                pulse.style.left = (10 + Math.random() * 80) + '%';
+                pulse.style.top = (10 + Math.random() * 80) + '%';
+                pulse.style.animationDelay = i * 1.5 + 's';
+                pulse.style.animationDuration = (5 + Math.random() * 3) + 's';
+                container.appendChild(pulse);
+            }
+        }
+        
+        function initMatrixRain() {
+            const container = document.getElementById('matrixRain');
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+            const columnCount = 20;
+            
+            for (let i = 0; i < columnCount; i++) {
+                const column = document.createElement('div');
+                column.className = 'matrix-column';
+                column.style.left = (i * 5) + '%';
+                column.style.fontSize = (12 + Math.random() * 8) + 'px';
+                column.style.animationDuration = (10 + Math.random() * 15) + 's';
+                column.style.animationDelay = Math.random() * 5 + 's';
+                
+                const charCount = 15 + Math.floor(Math.random() * 15);
+                for (let j = 0; j < charCount; j++) {
+                    const char = document.createElement('span');
+                    char.className = 'matrix-char';
+                    char.textContent = chars[Math.floor(Math.random() * chars.length)];
+                    if (j === charCount - 1) char.classList.add('head');
+                    else if (j >= charCount - 3) char.classList.add('active');
+                    column.appendChild(char);
+                }
+                
+                container.appendChild(column);
+            }
+        }
+        
+        function initGeometricShards() {
+            const container = document.getElementById('geometricShards');
+            const shardCount = 15;
+            
+            for (let i = 0; i < shardCount; i++) {
+                const shard = document.createElement('div');
+                shard.className = 'shard';
+                const size = 20 + Math.random() * 60;
+                shard.style.width = size + 'px';
+                shard.style.height = size + 'px';
+                shard.style.left = (5 + Math.random() * 90) + '%';
+                shard.style.top = (5 + Math.random() * 90) + '%';
+                shard.style.animationDelay = Math.random() * 10 + 's';
+                shard.style.animationDuration = (10 + Math.random() * 10) + 's';
+                shard.style.opacity = 0.2 + Math.random() * 0.4;
+                container.appendChild(shard);
+            }
+        }
+        
+        function initFlowIndicators() {
+            const container = document.getElementById('flowIndicators');
+            const positions = [
+                { top: '15%', left: '10%', rotate: 0 },
+                { top: '25%', right: '12%', rotate: 90 },
+                { top: '60%', left: '8%', rotate: -45 },
+                { top: '75%', right: '10%', rotate: 45 },
+                { top: '40%', left: '50%', rotate: 180 }
+            ];
+            
+            positions.forEach((pos, index) => {
+                const indicator = document.createElement('div');
+                indicator.className = 'flow-indicator';
+                if (pos.top) indicator.style.top = pos.top;
+                if (pos.left) indicator.style.left = pos.left;
+                if (pos.right) indicator.style.right = pos.right;
+                indicator.style.transform = `rotate(${pos.rotate}deg)`;
+                indicator.style.animationDelay = index * 0.8 + 's';
+                container.appendChild(indicator);
+            });
+        }
+        
+        function startApp() {
+            window.location.href = '/app';
+        }
+        
+        function scrollToFeatures() {
+            document.getElementById('features').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            const scrollY = window.scrollY;
+            
+            if (scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+            
+            // 视差滚动效果 - 多层级视差
+            const aurora = document.querySelector('.aurora');
+            const energyRings = document.querySelector('.energy-rings');
+            const particles = document.querySelector('.particles-container');
+            const gridLines = document.querySelector('.grid-lines');
+            const diagonalGrid = document.querySelector('.diagonal-grid');
+            const hexGrid = document.querySelector('.hex-grid');
+            const dataNetwork = document.querySelector('.data-network');
+            const glowSpots = document.querySelectorAll('.glow-spot');
+            const matrixRain = document.querySelector('.matrix-rain');
+            const geometricShards = document.querySelector('.geometric-shards');
+            const cubeFrame = document.querySelector('.cube-frame');
+            const energyPulses = document.querySelector('.energy-pulses');
+            
+            if (aurora) aurora.style.transform = `rotate(${scrollY * 0.02}deg) translateY(${scrollY * 0.03}px)`;
+            if (energyRings) energyRings.style.transform = `translate(-50%, -50%) translateY(${scrollY * 0.08}px)`;
+            if (particles) particles.style.transform = `translateY(${scrollY * 0.12}px)`;
+            if (gridLines) gridLines.style.transform = `translate(${scrollY * 0.05}px, ${scrollY * 0.05}px)`;
+            if (diagonalGrid) diagonalGrid.style.transform = `translate(${scrollY * 0.03}px, ${scrollY * 0.03}px)`;
+            if (hexGrid) hexGrid.style.transform = `translate(${scrollY * 0.02}px, ${scrollY * 0.02}px)`;
+            if (dataNetwork) dataNetwork.style.transform = `translateY(${scrollY * 0.06}px)`;
+            if (matrixRain) matrixRain.style.transform = `translateY(${scrollY * 0.04}px)`;
+            if (geometricShards) geometricShards.style.transform = `translateY(${scrollY * 0.07}px)`;
+            if (cubeFrame) cubeFrame.style.transform = `translate(-50%, -50%) translateY(${scrollY * 0.05}px)`;
+            if (energyPulses) energyPulses.style.transform = `translateY(${scrollY * 0.09}px)`;
+            
+            glowSpots.forEach((spot, index) => {
+                const speed = 0.02 + index * 0.01;
+                spot.style.transform = `translate(${scrollY * speed}px, ${scrollY * speed * 0.5}px)`;
+            });
+        });
+        
+        // 鼠标移动视差效果 - 多层级
+        document.addEventListener('mousemove', (e) => {
+            const mouseX = e.clientX / window.innerWidth - 0.5;
+            const mouseY = e.clientY / window.innerHeight - 0.5;
+            
+            const energyRings = document.querySelector('.energy-rings');
+            const aurora = document.querySelector('.aurora');
+            const particles = document.querySelector('.particles-container');
+            const dataNetwork = document.querySelector('.data-network');
+            const glowSpots = document.querySelectorAll('.glow-spot');
+            const radarScan = document.querySelector('.radar-scan');
+            const matrixRain = document.querySelector('.matrix-rain');
+            const geometricShards = document.querySelector('.geometric-shards');
+            const cubeFrame = document.querySelector('.cube-frame');
+            const energyPulses = document.querySelector('.energy-pulses');
+            
+            if (energyRings) {
+                energyRings.style.transform = `translate(calc(-50% + ${mouseX * 25}px), calc(-50% + ${mouseY * 25}px))`;
+            }
+            if (aurora) {
+                aurora.style.transform = `rotate(${mouseX * 5}deg) translateX(${mouseX * 10}px) translateY(${mouseY * 10}px)`;
+            }
+            if (particles) {
+                particles.style.transform = `translate(${mouseX * 15}px, ${mouseY * 15}px)`;
+            }
+            if (dataNetwork) {
+                dataNetwork.style.transform = `translate(${mouseX * 10}px, ${mouseY * 10}px)`;
+            }
+            if (radarScan) {
+                radarScan.style.transform = `translate(calc(-50% + ${mouseX * 5}px), calc(-50% + ${mouseY * 5}px))`;
+            }
+            
+            glowSpots.forEach((spot, index) => {
+                const intensity = 5 + index * 3;
+                spot.style.transform = `translate(${mouseX * intensity}px, ${mouseY * intensity}px)`;
+            });
+            
+            if (matrixRain) {
+                matrixRain.style.transform = `translate(${mouseX * 8}px, ${mouseY * 8}px)`;
+            }
+            if (geometricShards) {
+                geometricShards.style.transform = `translate(${mouseX * 12}px, ${mouseY * 12}px)`;
+            }
+            if (cubeFrame) {
+                cubeFrame.style.transform = `translate(calc(-50% + ${mouseX * 15}px), calc(-50% + ${mouseY * 15}px))`;
+            }
+            if (energyPulses) {
+                energyPulses.style.transform = `translate(${mouseX * 6}px, ${mouseY * 6}px)`;
+            }
+        });
+        
+        window.addEventListener('load', () => {
+            initDataStreams();
+            initParticles();
+            initDataNetwork();
+            initFlowingLights();
+            initEnergyPulses();
+            initMatrixRain();
+            initGeometricShards();
+            initFlowIndicators();
+        });
+    </script>
+</body>
+</html>

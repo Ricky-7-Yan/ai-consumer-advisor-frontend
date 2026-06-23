@@ -1,0 +1,20 @@
+{
+  "name": "ai-consumer-advisor",
+  "version": "1.0.0",
+  "description": "AI消费防冲动理性参谋 - 智能消费决策助手",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

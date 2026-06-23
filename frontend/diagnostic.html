@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消费习惯诊断报告</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --secondary: #0099cc;
+            --accent: #00d4ff;
+            --bg-dark: #0a0a1a;
+            --bg-card: rgba(255,255,255,0.05);
+            --bg-card-hover: rgba(255,255,255,0.08);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255,255,255,0.7);
+            --text-muted: rgba(255,255,255,0.5);
+            --border: rgba(255,255,255,0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(0,212,255,0.3);
+            border-radius: 50%;
+            animation: float 10s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+            50% { transform: translateY(-50px) translateX(20px); opacity: 0.6; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .header {
+            position: relative;
+            z-index: 1;
+            background: rgba(10,10,26,0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,212,255,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .page-title-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .glass-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .glass-card:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .rationality-section {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .score-circle {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            flex-shrink: 0;
+        }
+
+        .score-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-inner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .score-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+        }
+
+        .score-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .rationality-content {
+            flex: 1;
+        }
+
+        .rationality-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .rationality-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .risk-distribution {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .risk-card {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .risk-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .risk-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tactics-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .tactic-tag {
+            padding: 10px 20px;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .issue-item {
+            padding: 16px;
+            background: rgba(245,158,11,0.1);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .issue-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .issue-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .recommendation-item {
+            padding: 16px;
+            background: rgba(59,130,246,0.1);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .recommendation-number {
+            font-weight: 700;
+            color: var(--info);
+            flex-shrink: 0;
+        }
+
+        .recommendation-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .rule-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(16,185,129,0.1);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .rule-number {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .rule-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .empty-desc {
+            font-size: 14px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .rationality-section {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .risk-distribution {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 16px;
+            }
+
+            .container {
+                padding: 16px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles-container" id="particles"></div>
+
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">理性参谋</div>
+            <div style="font-size: 14px; color: var(--text-muted);">消费习惯诊断报告</div>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-secondary" onclick="goDashboard()">返回仪表盘</button>
+            <button class="btn btn-secondary" onclick="goHome()">返回首页</button>
+            <button class="btn btn-primary" onclick="loadReport()">刷新报告</button>
+        </div>
+    </header>
+
+    <main class="container" id="report-container">
+        <div class="loading-container">
+            <div>
+                <div class="loading-spinner"></div>
+                <div>正在生成诊断报告...</div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        报告生成时间: <span id="generated-time">--</span>
+    </footer>
+
+    <script>
+        function initParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        function goDashboard() {
+            window.location.href = '/app';
+        }
+
+        async function loadReport() {
+            const container = document.getElementById('report-container');
+            const timeElement = document.getElementById('generated-time');
+
+            container.innerHTML = `
+                <div class="loading-container">
+                    <div>
+                        <div class="loading-spinner"></div>
+                        <div>正在生成诊断报告...</div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/api/diagnostic/1');
+                const report = await response.json();
+
+                if (!report.hasData) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">📊</div>
+                            <div class="empty-title">暂无足够数据</div>
+                            <div class="empty-desc">${report.message || '请先进行几次消费分析后再查看诊断报告'}</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                timeElement.textContent = new Date(report.generatedAt).toLocaleString('zh-CN');
+
+                const scoreColor = report.overview.rationalityScore >= 80 ? '#10b981' : 
+                                   report.overview.rationalityScore >= 60 ? '#3b82f6' :
+                                   report.overview.rationalityScore >= 40 ? '#f59e0b' : '#ef4444';
+
+                const renderCommonTactics = () => {
+                    if (!report.commonTactics || report.commonTactics.length === 0) return '';
+                    return `
+                        <div class="glass-card" style="margin-bottom: 24px;">
+                            <div class="section-title">👾 您最常遇到的营销套路 TOP5</div>
+                            <div class="tactics-list">
+                                ${report.commonTactics.map((item, idx) => `
+                                    <div class="tactic-tag">
+                                        <span style="font-weight: 700; color: #ef4444;">${idx + 1}</span>
+                                        <span>${item.tactic}</span>
+                                        <span style="font-size: 12px; color: var(--text-muted);">×${item.count}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                };
+
+                const renderIssues = () => {
+                    if (!report.issues || report.issues.length === 0) return '';
+                    return `
+                        <div class="glass-card" style="margin-bottom: 24px;">
+                            <div class="section-title">⚠️ 问题诊断</div>
+                            ${report.issues.map(issue => `
+                                <div class="issue-item">
+                                    <div class="issue-title">${issue.title}</div>
+                                    <div class="issue-desc">${issue.content}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                };
+
+                const renderRecommendations = () => {
+                    if (!report.recommendations || report.recommendations.length === 0) return '';
+                    return `
+                        <div class="glass-card" style="margin-bottom: 24px;">
+                            <div class="section-title">💡 改进建议</div>
+                            ${report.recommendations.map((rec, idx) => `
+                                <div class="recommendation-item">
+                                    <div class="recommendation-number">${idx + 1}.</div>
+                                    <div class="recommendation-text">${rec.content}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                };
+
+                container.innerHTML = `
+                    <div class="page-title-section">
+                        <h1 class="page-title">消费习惯诊断报告</h1>
+                        <p class="page-subtitle">基于您的消费分析记录，生成个性化诊断</p>
+                    </div>
+
+                    <div class="glass-card rationality-section">
+                        <div class="score-circle">
+                            <svg viewBox="0 0 150 150">
+                                <circle cx="75" cy="75" r="65" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
+                                <circle cx="75" cy="75" r="65" fill="none" stroke="${scoreColor}" stroke-width="12"
+                                    stroke-dasharray="${report.overview.rationalityScore * 4.08} 408" stroke-linecap="round"/>
+                            </svg>
+                            <div class="score-inner">
+                                <div class="score-number" style="color: ${scoreColor};">${report.overview.rationalityScore}</div>
+                                <div class="score-label">理性指数</div>
+                            </div>
+                        </div>
+                        <div class="rationality-content">
+                            <div class="rationality-title">${report.conclusions[0]?.title || '诊断中...'}</div>
+                            <div class="rationality-desc">${report.conclusions[0]?.content || ''}</div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: var(--accent);">${report.overview.totalAnalyzed}</div>
+                            <div class="stat-label">累计分析</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: var(--success);">¥${report.overview.totalSaved.toLocaleString()}</div>
+                            <div class="stat-label">累计节省</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: var(--danger);">${report.overview.rejectRate}%</div>
+                            <div class="stat-label">拒绝率</div>
+                        </div>
+                        <div class="glass-card stat-card">
+                            <div class="stat-value" style="color: var(--warning);">¥${report.overview.monthlySaved.toLocaleString()}</div>
+                            <div class="stat-label">本月节省</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card" style="margin-bottom: 24px;">
+                        <div class="section-title">📊 风险分布</div>
+                        <div class="risk-distribution">
+                            <div class="risk-card" style="background: rgba(239,68,68,0.08);">
+                                <div class="risk-value" style="color: #ef4444;">${report.riskDistribution.high}</div>
+                                <div class="risk-label">高风险</div>
+                            </div>
+                            <div class="risk-card" style="background: rgba(245,158,11,0.08);">
+                                <div class="risk-value" style="color: #f59e0b;">${report.riskDistribution.medium}</div>
+                                <div class="risk-label">中风险</div>
+                            </div>
+                            <div class="risk-card" style="background: rgba(16,185,129,0.08);">
+                                <div class="risk-value" style="color: #10b981;">${report.riskDistribution.low}</div>
+                                <div class="risk-label">低风险</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${renderCommonTactics()}
+                    ${renderIssues()}
+                    ${renderRecommendations()}
+
+                    <div class="glass-card">
+                        <div class="section-title">📝 您的个人购物准则</div>
+                        <div>
+                            ${(report.personalRules || []).map((rule, idx) => `
+                                <div class="rule-item">
+                                    <div class="rule-number">${idx + 1}</div>
+                                    <div class="rule-text">${rule}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('加载诊断报告失败:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">❌</div>
+                        <div class="empty-title">加载失败</div>
+                        <div class="empty-desc">无法加载诊断报告，请稍后重试</div>
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initParticles();
+            loadReport();
+        });
+    </script>
+</body>
+</html>
