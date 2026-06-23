@@ -57,6 +57,15 @@ class ConsumerAdvisorAPI {
         }
       });
 
+      const tacticStats = {};
+      recentRecords.forEach(r => {
+        if (r.detected_tactics) {
+          r.detected_tactics.forEach(tactic => {
+            tacticStats[tactic] = (tacticStats[tactic] || 0) + 1;
+          });
+        }
+      });
+
       const days = ['日', '一', '二', '三', '四', '五', '六'];
       const weeklyTrend = [];
       for (let i = 6; i >= 0; i--) {
@@ -81,7 +90,8 @@ class ConsumerAdvisorAPI {
         averageRiskScore: stats.averageRiskScore,
         weeklyTrend: weeklyTrend,
         riskDistribution: riskDistribution,
-        categoryStats: categoryStats
+        categoryStats: categoryStats,
+        tacticStats: tacticStats
       };
     } catch (error) {
       console.error('获取统计数据失败:', error);
