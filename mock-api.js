@@ -86,7 +86,10 @@ const MockAPI = {
 
   loadData() {
     const saved = localStorage.getItem('consumerAdvisorDB');
-    if (saved) {
+    const dataVersion = localStorage.getItem('consumerAdvisorVersion');
+    const currentVersion = '1.2';
+    
+    if (saved && dataVersion === currentVersion) {
       this.database = JSON.parse(saved);
     } else {
       this.database.analysis_records = [
@@ -107,6 +110,7 @@ const MockAPI = {
 
   saveData() {
     localStorage.setItem('consumerAdvisorDB', JSON.stringify(this.database));
+    localStorage.setItem('consumerAdvisorVersion', '1.2');
   },
 
   getPriceThreshold(category) {
