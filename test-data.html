@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>数据测试</title>
+    <script src="mock-api.js"></script>
+    <script src="api.js"></script>
+</head>
+<body>
+    <h1>数据测试</h1>
+    <div id="result"></div>
+    <script>
+        async function testData() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const stats = await consumerAdvisorAPI.getStats();
+                resultDiv.innerHTML = '<h2>getStats() 结果:</h2>' + JSON.stringify(stats, null, 2);
+                
+                const history = await consumerAdvisorAPI.getHistory(30);
+                resultDiv.innerHTML += '<h2>getHistory() 结果:</h2>' + JSON.stringify(history, null, 2);
+                
+                const analysis = await consumerAdvisorAPI.analyzePurchase('限量版商品', 200, '服饰鞋包', '限量发售，仅剩最后100件', '看到限量版商品很心动');
+                resultDiv.innerHTML += '<h2>analyzePurchase() 结果:</h2>' + JSON.stringify(analysis, null, 2);
+                
+                const diagnostic = await consumerAdvisorAPI.getDiagnostic();
+                resultDiv.innerHTML += '<h2>getDiagnostic() 结果:</h2>' + JSON.stringify(diagnostic, null, 2);
+            } catch (error) {
+                resultDiv.innerHTML = '<h2>错误:</h2>' + error.message;
+            }
+        }
+        
+        testData();
+    </script>
+</body>
+</html>

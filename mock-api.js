@@ -205,10 +205,11 @@ const MockAPI = {
     };
   },
 
-  analyzeMarketingTactics(productName) {
+  analyzeMarketingTactics(productName, description = '') {
     const detected = [];
+    const fullText = productName + ' ' + description;
     this.marketingTactics.forEach(tactic => {
-      if (productName.includes(tactic)) {
+      if (fullText.includes(tactic)) {
         detected.push(tactic);
       }
     });
@@ -277,7 +278,7 @@ const MockAPI = {
   calculateRiskScore(productName, price, category, description, impulseIndicators) {
     let score = 0;
     
-    const tactics = this.analyzeMarketingTactics(productName);
+    const tactics = this.analyzeMarketingTactics(productName, description);
     score += tactics.length * 8;
     
     const impulse = this.analyzeImpulseIndicators(productName, description);
@@ -309,7 +310,7 @@ const MockAPI = {
   generateAnalysis(productName, price, category, description, impulseIndicators) {
     const riskScore = this.calculateRiskScore(productName, price, category, description, impulseIndicators);
     const riskLevel = this.getRiskLevel(riskScore);
-    const tactics = this.analyzeMarketingTactics(productName);
+    const tactics = this.analyzeMarketingTactics(productName, description);
     const impulse = this.analyzeImpulseIndicators(productName, description);
     const psychology = this.analyzePsychology(productName);
     const necessity = this.analyzeNecessity(productName);
