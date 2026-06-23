@@ -7,3 +7,6 @@ node_modules/
 *.png
 *.md
 ~$*
+backend/
+session_id_temp/
+frontend/

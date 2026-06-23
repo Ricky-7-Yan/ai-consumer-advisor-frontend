@@ -467,6 +467,8 @@
         报告生成时间: <span id="generated-time">--</span>
     </footer>
 
+    <script src="mock-api.js"></script>
+    <script src="api.js"></script>
     <script>
         function initParticles() {
             const container = document.getElementById('particles');
@@ -482,11 +484,11 @@
         }
 
         function goHome() {
-            window.location.href = '/';
+            window.location.href = 'index.html';
         }
 
         function goDashboard() {
-            window.location.href = '/app';
+            window.location.href = 'app.html';
         }
 
         async function loadReport() {

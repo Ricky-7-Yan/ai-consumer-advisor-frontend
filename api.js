@@ -1,25 +1,15 @@
 class ConsumerAdvisorAPI {
   constructor() {
-    this.apiBaseUrl = window.location.origin;
     this.userId = 1;
   }
 
   async analyzePurchase(productName, price, category, description = '', reason = '') {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: this.userId,
-          productName,
-          price,
-          category,
-          description,
-          reason
-        })
-      });
-      const data = await response.json();
-      return data;
+      const result = window.MockAPI.generateAnalysis(productName, price, category, description, reason ? [reason] : []);
+      if (result.success) {
+        window.MockAPI.saveAnalysis(result.data);
+      }
+      return result;
     } catch (error) {
       console.error('分析失败:', error);
       return { success: false, error: error.message };
@@ -28,9 +18,7 @@ class ConsumerAdvisorAPI {
 
   async getHistory(days = 30) {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/history/${this.userId}?days=${days}`);
-      const data = await response.json();
-      return data;
+      return window.MockAPI.getHistory(this.userId, days);
     } catch (error) {
       console.error('获取历史记录失败:', error);
       return [];
@@ -39,9 +27,16 @@ class ConsumerAdvisorAPI {
 
   async getStats() {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/stats/${this.userId}`);
-      const data = await response.json();
-      return data;
+      const stats = window.MockAPI.getStats(this.userId);
+      return {
+        totalSaved: stats.totalSaved,
+        rejectCount: stats.totalRejected,
+        acceptCount: stats.totalAccepted,
+        totalAnalyzed: stats.totalAnalyzed,
+        streak: stats.streakDays,
+        badges: stats.badges,
+        averageRiskScore: stats.averageRiskScore
+      };
     } catch (error) {
       console.error('获取统计数据失败:', error);
       return {
@@ -49,16 +44,16 @@ class ConsumerAdvisorAPI {
         rejectCount: 0,
         acceptCount: 0,
         totalAnalyzed: 0,
-        streak: 0
+        streak: 0,
+        badges: [],
+        averageRiskScore: 0
       };
     }
   }
 
   async getBudget() {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/budget/${this.userId}`);
-      const data = await response.json();
-      return data;
+      return window.MockAPI.getBudget(this.userId);
     } catch (error) {
       console.error('获取预算失败:', error);
       return {
@@ -70,17 +65,10 @@ class ConsumerAdvisorAPI {
 
   async setBudget(monthlyBudget, categories) {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/budget/set`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: this.userId,
-          monthlyBudget,
-          categories
-        })
+      return window.MockAPI.updateBudget(this.userId, {
+        monthly_budget: monthlyBudget,
+        categories: categories
       });
-      const data = await response.json();
-      return data;
     } catch (error) {
       console.error('设置预算失败:', error);
       return { success: false, error: error.message };
@@ -89,9 +77,7 @@ class ConsumerAdvisorAPI {
 
   async getTactics() {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/tactics`);
-      const data = await response.json();
-      return data;
+      return window.MockAPI.marketingTactics;
     } catch (error) {
       console.error('获取套路库失败:', error);
       return [];
@@ -100,9 +86,7 @@ class ConsumerAdvisorAPI {
 
   async healthCheck() {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/health`);
-      const data = await response.json();
-      return data;
+      return window.MockAPI.health();
     } catch (error) {
       console.error('健康检查失败:', error);
       return { status: 'error' };
@@ -111,12 +95,20 @@ class ConsumerAdvisorAPI {
 
   async getDiagnostic() {
     try {
-      const response = await fetch(`${this.apiBaseUrl}/api/diagnostic/${this.userId}`);
-      const data = await response.json();
-      return data;
+      const result = window.MockAPI.generateDiagnosticReport(this.userId);
+      return { hasData: true, data: result.data };
     } catch (error) {
       console.error('获取诊断报告失败:', error);
       return { hasData: false, message: '获取诊断报告失败' };
+    }
+  }
+
+  async getCategories() {
+    try {
+      return window.MockAPI.getCategories();
+    } catch (error) {
+      console.error('获取分类失败:', error);
+      return [];
     }
   }
 }
