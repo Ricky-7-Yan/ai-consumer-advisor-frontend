@@ -294,8 +294,14 @@ const MockAPI = {
     score += psychology.length * 5;
     
     const priceIndicator = this.analyzePriceIndicator(productName, price, category);
-    const sensitivityWeight = priceIndicator.sensitivityAdjustment;
-    score += Math.min(priceIndicator.priceChangeRisk * sensitivityWeight, 25);
+    const sensitivityWeight = priceIndicator.sensitivityAdjustment || 1.0;
+    const priceRiskContribution = (priceIndicator.priceChangeRisk || 0) * sensitivityWeight;
+    score += Math.min(priceRiskContribution, 25);
+    
+    if (priceIndicator.isHighPrice) {
+      const deviation = Math.abs(priceIndicator.priceDeviation || 0);
+      score += Math.min(deviation * 50, 20);
+    }
     
     const necessity = this.analyzeNecessity(productName);
     score += (100 - necessity.score) * 0.2;
@@ -304,10 +310,11 @@ const MockAPI = {
       score += impulseIndicators.length * 5;
     }
     
-    return Math.min(Math.round(score), 100);
+    return Math.max(10, Math.min(95, Math.round(score)));
   },
 
   getRiskLevel(score) {
+    if (isNaN(score)) return 'medium';
     if (score >= 70) return 'high';
     if (score >= 40) return 'medium';
     return 'low';
@@ -327,10 +334,16 @@ const MockAPI = {
     let decision = 'accept';
     let savedAmount = 0;
     
-    if (riskLevel === 'high') {
+    const highPriceThreshold = priceIndicator.threshold || 500;
+    const priceExceedRatio = price / highPriceThreshold;
+    
+    if (riskScore >= 70) {
       decision = 'reject';
       savedAmount = price;
-    } else if (riskLevel === 'medium') {
+    } else if (riskScore >= 40) {
+      decision = 'reject';
+      savedAmount = price;
+    } else if (priceExceedRatio > 2 && tactics.length >= 2) {
       decision = 'reject';
       savedAmount = price;
     }
@@ -346,7 +359,7 @@ const MockAPI = {
       { name: '营销套路', score: Math.min(tactics.length * 0.25, 1) },
       { name: '冲动指标', score: Math.min(impulse.length * 0.2, 1) },
       { name: '心理因素', score: Math.min(psychology.length * 0.2, 1) },
-      { name: '价格风险', score: Math.min(priceIndicator.priceChangeRisk / 30, 1) },
+      { name: '价格风险', score: Math.min(0.3 + Math.abs(priceIndicator.priceDeviation || 0) * 0.8, 1) },
       { name: '必要性', score: 1 - (necessity.score / 100) }
     ];
 
@@ -433,7 +446,7 @@ const MockAPI = {
         productName: productName,
         price: price,
         category: category,
-        riskScore: Math.round(riskScore / 10),
+        riskScore: isNaN(riskScore) ? 5 : Math.max(1, Math.min(10, Math.round(riskScore / 10))),
         riskLevel: riskLevel,
         decision: decision,
         recommendation: decision,
