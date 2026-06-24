@@ -11,9 +11,10 @@ const MockAPI = {
   },
 
   marketingTactics: [
-    '限时抢购', '限量发售', '饥饿营销', '满减陷阱', '捆绑套餐', 
+    '限时抢购', '限量发售', '限量版', '饥饿营销', '满减陷阱', '捆绑套餐', 
     '直播带货', '低价诱饵', '免费试用', '会员专属', '新品首发',
-    '社交证明', '稀缺性营销', '权威背书', '情感营销', '紧迫感营造'
+    '社交证明', '稀缺性营销', '权威背书', '情感营销', '紧迫感营造',
+    '限时秒杀', '限量款', '限时特惠', '限时折扣', '限量抢购'
   ],
 
   impulseKeywords: [
@@ -140,6 +141,7 @@ const MockAPI = {
       isHighPrice: price > threshold,
       priceElasticity: indicator.priceElasticity,
       sensitivityLevel: indicator.sensitivityAdjustment > 1.5 ? 'high' : indicator.sensitivityAdjustment > 1.2 ? 'medium' : 'low',
+      sensitivityAdjustment: indicator.sensitivityAdjustment,
       priceChangeRisk: this.calculatePriceChangeRisk(priceChangeRate, seasonalFactor, promotionImpact),
       threshold: threshold,
       avgMarketPrice: avgPrice,
